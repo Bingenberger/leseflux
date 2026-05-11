@@ -1,0 +1,1 @@
+ALTER TABLE "DiagnosticItem" ADD COLUMN "difficulty" INTEGER NOT NULL DEFAULT 2;

@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { hash as argon2Hash, verify as argon2Verify } from 'argon2'
-import { LoginChildSchema, LoginTeacherSchema } from '@leseflux/shared'
+import { LoginChildSchema, LoginTeacherSchema, LoginChildCodeSchema } from '@leseflux/shared'
 import { hashQrToken } from '../../lib/qr.js'
 import { authConfig, rateLimitConfig } from '../../config.js'
 
@@ -26,6 +26,32 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
     if (!user || user.role !== 'CHILD') {
       return reply.status(401).send({ error: 'Ungültiger QR-Code' })
+    }
+
+    const token = fastify.jwt.sign(
+      { userId: user.id, role: user.role },
+      { expiresIn: authConfig.childTokenExpiry },
+    )
+    reply.setCookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    })
+    return { token, user }
+  })
+
+  fastify.post('/login-child-code', loginRateLimit, async (req, reply) => {
+    const body = LoginChildCodeSchema.safeParse(req.body)
+    if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe' })
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { loginCode: body.data.loginCode },
+      select: { id: true, role: true, displayName: true, classId: true },
+    })
+
+    if (!user || user.role !== 'CHILD') {
+      return reply.status(401).send({ error: 'Ungültiger Code' })
     }
 
     const token = fastify.jwt.sign(

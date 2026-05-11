@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { TeacherLayout } from '../../components/shared/Layout.tsx'
 import { Button } from '../../components/shared/Button.tsx'
+import { PhosphorIcon } from '../../components/shared/PhosphorIcons.tsx'
 import { QrCodeDisplay } from '../../components/shared/QrCodeDisplay.tsx'
 import { QrScanner } from '../../components/shared/QrScanner.tsx'
 import { createStudent, regenerateStudentQr } from '../../lib/api.ts'
@@ -20,24 +21,28 @@ export default function NewStudentPage() {
   const [showAntonScanner, setShowAntonScanner] = useState(false)
   const [createdQrToken, setCreatedQrToken] = useState('')
   const [createdStudentName, setCreatedStudentName] = useState('')
+  const [createdLoginCode, setCreatedLoginCode] = useState('')
   const [formError, setFormError] = useState('')
 
   const [antonToken, setAntonToken] = useState<string | undefined>(undefined)
 
-  const doCreate = (existingQrToken?: string) =>
-    createStudent({
+  const doCreate = (existingQrToken?: string) => {
+    const payload: Parameters<typeof createStudent>[0] = {
       displayName,
-      classId,
-      birthYear: birthYear ? Number(birthYear) : undefined,
       parentalConsentDate: new Date().toISOString(),
-      existingQrToken,
-    })
+    }
+    if (classId) payload.classId = classId
+    if (birthYear) payload.birthYear = Number(birthYear)
+    if (existingQrToken) payload.existingQrToken = existingQrToken
+    return createStudent(payload)
+  }
 
   const createMutation = useMutation({
     mutationFn: () => doCreate(antonToken),
     onSuccess: ({ data }) => {
       setCreatedQrToken(data.qrToken)
       setCreatedStudentName(data.student.displayName)
+      setCreatedLoginCode(data.loginCode ?? '')
       setStep('qr-display')
     },
     onError: () => setFormError('Fehler beim Anlegen des Schülers.'),
@@ -73,8 +78,20 @@ export default function NewStudentPage() {
 
           <QrCodeDisplay value={createdQrToken} label={createdStudentName} size={250} />
 
+          {createdLoginCode && (
+            <div className="text-center bg-blue-50 rounded-xl border border-primary/20 px-6 py-4 w-full">
+              <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+                Login-Code (Testphase)
+              </p>
+              <p className="text-3xl font-bold tracking-[0.25em] text-primary">
+                {createdLoginCode}
+              </p>
+            </div>
+          )}
+
           <div className="flex gap-3 w-full">
             <Button
+              icon="printer"
               variant="ghost"
               className="flex-1"
               onClick={() => window.print()}
@@ -82,6 +99,7 @@ export default function NewStudentPage() {
               Drucken
             </Button>
             <Button
+              icon="check"
               className="flex-1"
               onClick={() => navigate(`/teacher/classes/${classId}`)}
             >
@@ -107,7 +125,7 @@ export default function NewStudentPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="z. B. „Mia""
+              placeholder='z. B. „Mia"'
             />
             <p className="text-xs text-gray-400 mt-1">Kein Nachname erforderlich.</p>
           </div>
@@ -144,7 +162,7 @@ export default function NewStudentPage() {
 
           {formError && <p className="text-red-600 text-sm">{formError}</p>}
 
-          <Button type="submit" disabled={createMutation.isPending} className="w-full">
+          <Button icon="userPlus" type="submit" disabled={createMutation.isPending} className="w-full">
             {createMutation.isPending ? 'Wird angelegt...' : 'Schüler anlegen & QR generieren'}
           </Button>
         </form>
@@ -152,8 +170,9 @@ export default function NewStudentPage() {
         <div className="mt-4 text-center flex flex-col gap-2">
           <button
             onClick={() => setShowAntonScanner((v) => !v)}
-            className="text-sm text-primary underline"
+            className="inline-flex items-center justify-center gap-1 text-sm text-primary underline"
           >
+            <PhosphorIcon name="uploadSimple" size={15} />
             Anton-Ausweis einscannen (bestehenden QR zuordnen)
           </button>
           {antonToken && (

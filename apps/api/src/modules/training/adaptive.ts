@@ -1,18 +1,31 @@
 import { adaptiveConfig } from '../../config.js'
+import { ADAPTATION } from '../../config/adaptation.js'
 
 interface ProgressSnapshot {
-  currentTargetWpm: number
-  sessionsSinceLastIncrease: number
+  fadingTargetWpm: number
+  fadingSessionsSinceIncrease: number
   totalSessions: number
   averageQuizAccuracy: number | null
 }
 
 interface AdaptiveResult {
-  currentTargetWpm: number
-  sessionsSinceLastIncrease: number
+  fadingTargetWpm: number
+  fadingSessionsSinceIncrease: number
   totalSessions: number
   averageQuizAccuracy: number
   offerIntermediateDiagnostic: boolean
+}
+
+interface FlashProgressSnapshot {
+  flashWordLevel: number
+  flashWordDurationMs: number
+  flashSessionsSinceIncrease: number
+}
+
+interface FlashAdaptiveResult {
+  flashWordLevel: number
+  flashWordDurationMs: number
+  flashSessionsSinceIncrease: number
 }
 
 /** Berechnet neuen gleitenden Genauigkeitsdurchschnitt über die letzten N Sitzungen. */
@@ -35,33 +48,68 @@ export function runAdaptiveEngine(
 ): AdaptiveResult {
   const newAvg = updateRollingAccuracy(progress.averageQuizAccuracy, sessionAccuracy)
   const newTotal = progress.totalSessions + 1
-  const newSessions = progress.sessionsSinceLastIncrease + 1
+  const newSessions = progress.fadingSessionsSinceIncrease + 1
 
-  const cfg = adaptiveConfig
-  const minWpm = cfg.minWpmByLevel[targetLevel] ?? 30
+  const cfg = ADAPTATION.fading
+  const minWpm = adaptiveConfig.minWpmByLevel[targetLevel] ?? 30
 
-  let newWpm = progress.currentTargetWpm
+  let newWpm = progress.fadingTargetWpm
   let newSessionsSinceLast = newSessions
 
-  if (newSessions >= cfg.sessionsBeforeChange) {
-    if (newAvg >= cfg.accuracyToIncrease) {
-      newWpm += cfg.wpmStep
+  if (newSessions >= cfg.sessionsPerStep) {
+    if (newAvg >= cfg.increaseAt) {
+      newWpm += cfg.stepWpm
       newSessionsSinceLast = 0
-    } else if (newAvg < cfg.accuracyToDecrease) {
-      newWpm = Math.max(newWpm - cfg.wpmStep, minWpm)
+    } else if (newAvg < cfg.decreaseAt) {
+      newWpm = Math.max(newWpm - cfg.stepWpm, minWpm)
       newSessionsSinceLast = 0
     } else {
       newSessionsSinceLast = 0
     }
   }
 
-  const offerIntermediateDiagnostic = newTotal % cfg.intermediateDiagnosticInterval === 0
+  const offerIntermediateDiagnostic = newTotal % ADAPTATION.diagnostic.intervalSessions === 0
 
   return {
-    currentTargetWpm: newWpm,
-    sessionsSinceLastIncrease: newSessionsSinceLast,
+    fadingTargetWpm: newWpm,
+    fadingSessionsSinceIncrease: newSessionsSinceLast,
     totalSessions: newTotal,
     averageQuizAccuracy: newAvg,
     offerIntermediateDiagnostic,
   }
+}
+
+export function runFlashAdaptiveEngine(
+  progress: FlashProgressSnapshot,
+  accuracy: number,
+): FlashAdaptiveResult {
+  const cfg = ADAPTATION.flashWord
+  const sessions = progress.flashSessionsSinceIncrease + 1
+
+  let flashWordLevel = progress.flashWordLevel
+  let flashWordDurationMs = progress.flashWordDurationMs
+  let flashSessionsSinceIncrease = sessions
+
+  if (sessions >= cfg.sessionsPerStep) {
+    if (accuracy >= cfg.increaseAt) {
+      const nextDuration = flashWordDurationMs - cfg.durationStepMs
+      if (nextDuration < cfg.durationMin) {
+        flashWordLevel += 1
+        flashWordDurationMs = cfg.durationOnLevelUp
+      } else {
+        flashWordDurationMs = nextDuration
+      }
+      flashSessionsSinceIncrease = 0
+    } else if (accuracy < cfg.decreaseAt) {
+      flashWordDurationMs = Math.min(
+        flashWordDurationMs + cfg.durationStepMs,
+        cfg.durationMax,
+      )
+      flashSessionsSinceIncrease = 0
+    } else {
+      flashSessionsSinceIncrease = 0
+    }
+  }
+
+  return { flashWordLevel, flashWordDurationMs, flashSessionsSinceIncrease }
 }

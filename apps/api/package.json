@@ -13,21 +13,25 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "seed:texts": "tsx scripts/seedTexts.ts"
+    "seed:texts": "tsx scripts/seedTexts.ts",
+    "seed:templates": "tsx scripts/seedTemplates.ts",
+    "seed:flash-words": "tsx scripts/seedFlashWords.ts",
+    "seed:cloze-templates": "tsx scripts/seedClozeTemplates.ts",
+    "migrate:v1-to-v2": "tsx scripts/migrate-v1-to-v2.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@fastify/cookie": "^9.4.0",
-    "@fastify/cors": "^9.0.1",
-    "@fastify/helmet": "^11.1.1",
+    "@fastify/cookie": "^11.0.0",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/helmet": "^12.0.0",
     "@fastify/jwt": "^9.0.1",
-    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/rate-limit": "^10.0.0",
     "@leseflux/shared": "*",
     "@prisma/client": "^5.20.0",
     "argon2": "^0.41.1",
-    "fastify": "^4.28.1",
+    "fastify": "^5.0.0",
     "fastify-plugin": "^4.5.1",
     "qrcode": "^1.5.4",
     "zod": "^3.23.8"

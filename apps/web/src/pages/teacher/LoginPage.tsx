@@ -65,7 +65,7 @@ export default function TeacherLoginPage() {
             />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
+          <Button icon="check" type="submit" disabled={loading} className="w-full">
             {loading ? 'Einen Moment...' : 'Anmelden'}
           </Button>
         </form>

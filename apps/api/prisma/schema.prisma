@@ -12,17 +12,21 @@ model User {
   role         UserRole
   displayName  String
   qrTokenHash  String?   @unique
+  loginCode    String?   @unique
   email        String?   @unique
   passwordHash String?
   birthYear    Int?
   classId      String?
+  sessionTemplateId String?
 
   class        Class?             @relation("ClassStudents", fields: [classId], references: [id])
+  sessionTemplate SessionTemplate? @relation("StudentSessionTemplate", fields: [sessionTemplateId], references: [id])
   teacherOf    Class[]            @relation("TeacherClasses")
   groupMembers GroupMember[]
   progress     UserProgress?
   diagnostics  DiagnosticResult[]
   sessions     TrainingSession[]
+  sessionTemplates SessionTemplate[]
   createdAt    DateTime           @default(now())
 }
 
@@ -33,15 +37,17 @@ enum UserRole {
 }
 
 model Class {
-  id         String   @id @default(uuid())
-  name       String
-  schoolYear String
-  teacherId  String
+  id                String   @id @default(uuid())
+  name              String
+  schoolYear        String
+  teacherId         String
+  sessionTemplateId String?
 
-  teacher  User      @relation("TeacherClasses", fields: [teacherId], references: [id])
-  students User[]    @relation("ClassStudents")
-  groups   Group[]
-  createdAt DateTime @default(now())
+  teacher         User             @relation("TeacherClasses", fields: [teacherId], references: [id])
+  sessionTemplate SessionTemplate? @relation(fields: [sessionTemplateId], references: [id])
+  students        User[]           @relation("ClassStudents")
+  groups          Group[]
+  createdAt       DateTime         @default(now())
 }
 
 model Group {
@@ -72,9 +78,10 @@ model Text {
   targetLevel  Int
   estimatedSec Int
 
-  questions TextQuestion[]
-  sessions  TrainingSession[]
-  createdAt DateTime          @default(now())
+  questions      TextQuestion[]
+  clozeTemplate  ClozeTemplate?
+  exerciseRuns   ExerciseRun[]
+  createdAt      DateTime        @default(now())
 }
 
 model TextQuestion {
@@ -89,10 +96,12 @@ model TextQuestion {
 }
 
 model Diagnostic {
-  id          String         @id @default(uuid())
-  type        DiagnosticType
-  name        String
-  durationSec Int
+  id               String         @id @default(uuid())
+  type             DiagnosticType
+  name             String
+  durationSec      Int
+  itemCount        Int            @default(24)
+  intervalSessions Int?
 
   items     DiagnosticItem[]
   results   DiagnosticResult[]
@@ -110,8 +119,10 @@ model DiagnosticItem {
   sentence     String
   isNonsense   Boolean
   orderIndex   Int
+  difficulty   Int     @default(2)
 
-  diagnostic Diagnostic @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  diagnostic Diagnostic         @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
+  answers    DiagnosticAnswer[]
 }
 
 model DiagnosticResult {
@@ -139,6 +150,7 @@ model DiagnosticAnswer {
   isCorrect      Boolean
 
   result DiagnosticResult @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  item   DiagnosticItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
 }
 
 enum AnswerType {
@@ -148,40 +160,116 @@ enum AnswerType {
 }
 
 model TrainingSession {
-  id              String    @id @default(uuid())
+  id              String        @id @default(uuid())
   userId          String
-  textId          String
-  targetWpm       Int
-  fadingMsBase    Int
-  fadingMsPerChar Int
+  templateId      String?
+  startedAt       DateTime
+  finishedAt      DateTime?
+  totalDurationMs Int?
+  completed       Boolean       @default(false)
+  starsEarned     Int?
+  trainingUnitId  String?
+
+  user         User             @relation(fields: [userId], references: [id])
+  template     SessionTemplate? @relation(fields: [templateId], references: [id])
+  exerciseRuns ExerciseRun[]
+}
+
+model ExerciseRun {
+  id              String       @id @default(uuid())
+  sessionId       String
+  exerciseType    ExerciseType
+  orderIndex      Int
   startedAt       DateTime
   finishedAt      DateTime?
   durationMs      Int?
-  completed       Boolean   @default(false)
 
-  user    User            @relation(fields: [userId], references: [id])
-  text    Text            @relation(fields: [textId], references: [id])
-  answers SessionAnswer[]
-}
+  textId          String?
+  targetWpm       Int?
+  flashDurationMs Int?
+  flashDifficulty Int?
 
-model SessionAnswer {
-  id             String @id @default(uuid())
-  sessionId      String
-  questionId     String
-  selectedIndex  Int
-  isCorrect      Boolean
-  responseTimeMs Int
+  itemsTotal      Int          @default(0)
+  itemsCorrect    Int          @default(0)
+  measuredWpm     Float?
+  responses       Json
 
   session TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  text    Text?           @relation(fields: [textId], references: [id])
+}
+
+enum ExerciseType {
+  FADING
+  FLASH_WORD
+  CLOZE
+  SELF_PACED
+}
+
+model FlashWord {
+  id              String   @id @default(uuid())
+  word            String   @unique
+  syllables       Int
+  difficultyLevel Int
+  distractors     Json
+  createdAt       DateTime @default(now())
+}
+
+model ClozeTemplate {
+  id          String        @id @default(uuid())
+  textId      String        @unique
+  strategy    ClozeStrategy
+  gapInterval Int?
+
+  text Text       @relation(fields: [textId], references: [id])
+  gaps ClozeGap[]
+}
+
+enum ClozeStrategy {
+  AUTO_EVERY_N
+  MANUAL
+}
+
+model ClozeGap {
+  id          String        @id @default(uuid())
+  templateId  String
+  wordIndex   Int
+  correctWord String
+  distractors Json
+
+  template ClozeTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+model SessionTemplate {
+  id        String            @id @default(uuid())
+  name      String
+  isDefault Boolean           @default(false)
+  blocks    Json
+  teacherId String?
+  teacher   User?             @relation(fields: [teacherId], references: [id])
+  sessions  TrainingSession[]
+  classes   Class[]
+  studentOverrides User[]     @relation("StudentSessionTemplate")
+  createdAt DateTime          @default(now())
+
+  @@index([teacherId])
 }
 
 model UserProgress {
   userId                       String    @id
-  currentTargetWpm             Int
-  sessionsSinceLastIncrease    Int       @default(0)
+  fadingTargetWpm              Int
+  selfPacedAvgWpm              Float?
+  flashWordLevel               Int       @default(1)
+  flashWordDurationMs          Int       @default(500)
+  clozeAccuracy                Float?
+  fadingSessionsSinceIncrease  Int       @default(0)
+  flashSessionsSinceIncrease   Int       @default(0)
+  clozeSessionsSinceIncrease   Int       @default(0)
   lastIntermediateDiagnosticAt DateTime?
   totalSessions                Int       @default(0)
   averageQuizAccuracy          Float?
+  starCount                    Int       @default(0)
+  streakDays                   Int       @default(0)
+  lastSessionDate              DateTime?
   updatedAt                    DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])

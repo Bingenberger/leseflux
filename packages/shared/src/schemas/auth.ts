@@ -4,6 +4,10 @@ export const LoginChildSchema = z.object({
   qrToken: z.string().min(1),
 })
 
+export const LoginChildCodeSchema = z.object({
+  loginCode: z.string().min(4).max(8).toUpperCase(),
+})
+
 export const LoginTeacherSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),

@@ -11,6 +11,7 @@ import authRoutes from './modules/auth/routes.js'
 import trainingRoutes from './modules/training/routes.js'
 import teacherRoutes from './modules/teacher/routes.js'
 import adminRoutes from './modules/admin/routes.js'
+import diagnosticRoutes from './modules/diagnostic/routes.js'
 
 export function buildApp() {
   const app = Fastify({
@@ -41,6 +42,7 @@ export function buildApp() {
   app.register(trainingRoutes, { prefix: '/api/training' })
   app.register(teacherRoutes, { prefix: '/api/teacher' })
   app.register(adminRoutes, { prefix: '/api/admin' })
+  app.register(diagnosticRoutes, { prefix: '/api/diagnostic' })
 
   return app
 }

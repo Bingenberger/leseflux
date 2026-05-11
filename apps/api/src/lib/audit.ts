@@ -1,9 +1,11 @@
-import type { PrismaClient } from '@prisma/client'
+import type { Prisma, PrismaClient } from '@prisma/client'
 
 export type AuditAction =
   | 'student.create'
   | 'student.delete'
   | 'student.qr_regenerate'
+  | 'student.code_regenerate'
+  | 'student.import_anton'
   | 'data.export'
   | 'parental_consent.confirmed'
 
@@ -15,6 +17,11 @@ export async function writeAuditLog(
   metadata?: Record<string, unknown>,
 ) {
   await prisma.auditLog.create({
-    data: { action, actorId, targetId, metadata: metadata ?? null },
+    data: {
+      action,
+      actorId,
+      targetId,
+      ...(metadata ? { metadata: metadata as Prisma.InputJsonObject } : {}),
+    },
   })
 }

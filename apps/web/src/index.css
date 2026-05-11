@@ -25,3 +25,26 @@
     @apply min-h-[56px] min-w-[56px];
   }
 }
+
+/* Hoher Kontrast – Leseansicht */
+.high-contrast {
+  --tw-bg-opacity: 1;
+  background-color: #ffffff;
+  color: #000000;
+}
+.high-contrast .bg-background {
+  background-color: #ffffff !important;
+}
+.high-contrast .text-gray-900 {
+  color: #000000 !important;
+}
+.high-contrast .text-gray-700 {
+  color: #111111 !important;
+}
+.high-contrast .text-gray-500 {
+  color: #333333 !important;
+}
+.high-contrast .border-gray-200,
+.high-contrast .border-gray-100 {
+  border-color: #000000 !important;
+}

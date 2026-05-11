@@ -1,0 +1,6 @@
+OpenDyslexic-Schriftdateien hier ablegen:
+  OpenDyslexic-Regular.otf
+  OpenDyslexic-Bold.otf
+
+Lizenz: SIL Open Font License 1.1
+Download: https://opendyslexic.org  (Abschnitt "Download")

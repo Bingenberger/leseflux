@@ -12,6 +12,16 @@ import TeacherLoginPage from '../pages/teacher/LoginPage.tsx'
 import DashboardPage from '../pages/teacher/DashboardPage.tsx'
 import ClassPage from '../pages/teacher/ClassPage.tsx'
 import NewStudentPage from '../pages/teacher/NewStudentPage.tsx'
+import StudentDetailPage from '../pages/teacher/StudentDetailPage.tsx'
+import TextsPage from '../pages/teacher/TextsPage.tsx'
+import FlashWordsPage from '../pages/teacher/FlashWordsPage.tsx'
+import DiagnosticsPage from '../pages/teacher/DiagnosticsPage.tsx'
+import TemplatesPage from '../pages/teacher/TemplatesPage.tsx'
+import QrPrintPage from '../pages/teacher/QrPrintPage.tsx'
+import AdminTeachersPage from '../pages/admin/TeachersPage.tsx'
+
+// Child diagnostic
+import DiagnosticPage from '../pages/child/DiagnosticPage.tsx'
 
 function RootRedirect() {
   const user = useAuthStore((s) => s.user)
@@ -29,6 +39,16 @@ export default function AppRoutes() {
         {/* Öffentliche Routen */}
         <Route path="/login" element={<TeacherLoginPage />} />
         <Route path="/child/login" element={<ChildLoginPage />} />
+
+        {/* Kind – Diagnostik */}
+        <Route
+          path="/child/diagnostic/:type"
+          element={
+            <ProtectedRoute allowedRoles={['CHILD']} redirectTo="/child/login">
+              <DiagnosticPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Kind-Routen */}
         <Route
@@ -66,10 +86,67 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/teacher/texts"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <TextsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/templates"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <TemplatesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/flash-words"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <FlashWordsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/diagnostics"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <DiagnosticsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/students/:id"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <StudentDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/teacher/classes/:classId/students/new"
           element={
             <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
               <NewStudentPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teacher/classes/:id/qr-print"
+          element={
+            <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']} redirectTo="/login">
+              <QrPrintPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/teachers"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']} redirectTo="/login">
+              <AdminTeachersPage />
             </ProtectedRoute>
           }
         />

@@ -2,7 +2,8 @@ import type { PrismaClient } from '@prisma/client'
 import { levelFromWpm } from '@leseflux/shared'
 
 /** Wählt einen passenden Text basierend auf WPM-Niveau.
- *  Schließt die letzten `excludeCount` Sitzungen des Nutzers aus. */
+ *  Schließt die letzten `excludeCount` Sitzungen des Nutzers aus.
+ *  Fallback: benachbarte Niveaus → beliebiger Text, falls Zielniveau leer ist. */
 export async function selectNextText(
   prisma: PrismaClient,
   userId: string,
@@ -11,35 +12,51 @@ export async function selectNextText(
 ) {
   const level = levelFromWpm(currentTargetWpm)
 
-  // Zuletzt gelesene Texte ermitteln
   const recent = await prisma.trainingSession.findMany({
     where: { userId },
     orderBy: { startedAt: 'desc' },
     take: excludeCount,
-    select: { textId: true },
-  })
-  const excludeIds = recent.map((s) => s.textId)
-
-  const candidates = await prisma.text.findMany({
-    where: {
-      targetLevel: level,
-      id: { notIn: excludeIds },
+    select: {
+      exerciseRuns: {
+        where: { textId: { not: null } },
+        select: { textId: true },
+      },
     },
-    select: { id: true },
   })
+  const excludeIds = recent.flatMap((s) =>
+    s.exerciseRuns.map((r) => r.textId).filter((id): id is string => id !== null),
+  )
 
-  // Fallback: alle Texte der Stufe, falls zu wenige verfügbar
-  const pool =
-    candidates.length > 0
-      ? candidates
-      : await prisma.text.findMany({
-          where: { targetLevel: level },
-          select: { id: true },
-        })
+  const pickFrom = async (levels: number[]): Promise<{ id: string } | null> => {
+    const candidates = await prisma.text.findMany({
+      where: { targetLevel: { in: levels }, id: { notIn: excludeIds } },
+      select: { id: true },
+    })
+    if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)]!
 
-  if (pool.length === 0) return null
+    // Alle Texte der Niveaus (ohne Ausschluss), falls alles schon gelesen
+    const all = await prisma.text.findMany({
+      where: { targetLevel: { in: levels } },
+      select: { id: true },
+    })
+    return all.length > 0 ? all[Math.floor(Math.random() * all.length)]! : null
+  }
 
-  const chosen = pool[Math.floor(Math.random() * pool.length)]!
+  // 1. Zielnivaeu
+  let chosen = await pickFrom([level])
+
+  // 2. Benachbartes Niveau
+  if (!chosen) {
+    const adjacent = level === 2 ? [3] : level === 4 ? [3] : [2, 4]
+    chosen = await pickFrom(adjacent)
+  }
+
+  // 3. Irgendein Text
+  if (!chosen) {
+    chosen = await pickFrom([2, 3, 4])
+  }
+
+  if (!chosen) return null
 
   return prisma.text.findUnique({
     where: { id: chosen.id },
