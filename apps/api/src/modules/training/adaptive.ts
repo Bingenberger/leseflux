@@ -1,5 +1,4 @@
 import { adaptiveConfig } from '../../config.js'
-import { ADAPTATION } from '../../config/adaptation.js'
 
 interface ProgressSnapshot {
   fadingTargetWpm: number
@@ -50,7 +49,7 @@ export function runAdaptiveEngine(
   const newTotal = progress.totalSessions + 1
   const newSessions = progress.fadingSessionsSinceIncrease + 1
 
-  const cfg = ADAPTATION.fading
+  const cfg = adaptiveConfig.fading
   const minWpm = adaptiveConfig.minWpmByLevel[targetLevel] ?? 30
 
   let newWpm = progress.fadingTargetWpm
@@ -68,7 +67,7 @@ export function runAdaptiveEngine(
     }
   }
 
-  const offerIntermediateDiagnostic = newTotal % ADAPTATION.diagnostic.intervalSessions === 0
+  const offerIntermediateDiagnostic = newTotal % adaptiveConfig.diagnostic.intervalSessions === 0
 
   return {
     fadingTargetWpm: newWpm,
@@ -83,7 +82,7 @@ export function runFlashAdaptiveEngine(
   progress: FlashProgressSnapshot,
   accuracy: number,
 ): FlashAdaptiveResult {
-  const cfg = ADAPTATION.flashWord
+  const cfg = adaptiveConfig.flashWord
   const sessions = progress.flashSessionsSinceIncrease + 1
 
   let flashWordLevel = progress.flashWordLevel

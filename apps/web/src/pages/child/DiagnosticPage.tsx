@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChildLayout } from '../../components/shared/Layout.tsx'
@@ -23,8 +23,11 @@ export default function DiagnosticPage() {
 
   const diagnosticType = type === 'intermediate' ? 'INTERMEDIATE' : 'ENTRY'
   const isEntry = diagnosticType === 'ENTRY'
+  const startedRef = useRef(false)
 
   useEffect(() => {
+    if (startedRef.current) return
+    startedRef.current = true
     startDiagnostic(diagnosticType)
       .then(({ data }) => {
         setResultId(data.resultId)

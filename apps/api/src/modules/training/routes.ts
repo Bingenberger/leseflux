@@ -20,7 +20,7 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
       where: { type: 'INTERMEDIATE' },
       select: { intervalSessions: true },
     })
-    return diagnostic?.intervalSessions ?? adaptiveConfig.intermediateDiagnosticInterval
+    return diagnostic?.intervalSessions ?? adaptiveConfig.diagnostic.intervalSessions
   }
 
   fastify.get('/my-progress', { preHandler: fastify.authenticate }, async (req) => {
@@ -43,7 +43,7 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
       streakDays: progress?.streakDays ?? 0,
       totalSessions,
       currentTargetWpm: progress?.fadingTargetWpm ?? null,
-      nextTargetWpm: progress ? progress.fadingTargetWpm + adaptiveConfig.wpmStep : null,
+      nextTargetWpm: progress ? progress.fadingTargetWpm + adaptiveConfig.fading.stepWpm : null,
       sessionsUntilNextCheck,
       todayDone,
     }
@@ -317,8 +317,9 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     if (session.completed) return reply.status(409).send({ error: 'Sitzung bereits abgeschlossen' })
 
     const fadingRuns = session.exerciseRuns.filter((r) => r.exerciseType === 'FADING')
-    const totalQuestions = fadingRuns.reduce((sum, r) => sum + r.itemsTotal, 0)
-    const correctCount = fadingRuns.reduce((sum, r) => sum + r.itemsCorrect, 0)
+    const scoredRuns = session.exerciseRuns.filter((r) => r.itemsTotal > 0)
+    const totalQuestions = scoredRuns.reduce((sum, r) => sum + r.itemsTotal, 0)
+    const correctCount = scoredRuns.reduce((sum, r) => sum + r.itemsCorrect, 0)
     const accuracy = totalQuestions > 0 ? correctCount / totalQuestions : 0
     const starsEarned = accuracy >= 0.7 ? 3 : accuracy >= 0.4 ? 2 : 1
 

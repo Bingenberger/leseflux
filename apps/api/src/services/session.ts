@@ -204,11 +204,13 @@ export async function createNextReadingExercise(
   const text = await selectNextText(prisma, userId, targetWpm)
   if (!text) return null
 
+  const runCount = await prisma.exerciseRun.count({ where: { sessionId: previousRun.sessionId } })
+
   const run = await prisma.exerciseRun.create({
     data: {
       sessionId: previousRun.sessionId,
       exerciseType: previousRun.exerciseType,
-      orderIndex: previousRun.orderIndex,
+      orderIndex: runCount,
       startedAt: new Date(),
       textId: text.id,
       targetWpm: previousRun.exerciseType === 'FADING' ? targetWpm : null,

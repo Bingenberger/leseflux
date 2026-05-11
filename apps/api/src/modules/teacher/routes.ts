@@ -1236,11 +1236,11 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         })),
       }
 
+      const nameEncoded = encodeURIComponent(`leseflux-export-${student.displayName}.json`)
+      const nameSafe = `leseflux-export-${student.displayName.replace(/[^\w.-]/g, '_')}.json`
       reply.header('Content-Type', 'application/json')
-      reply.header(
-        'Content-Disposition',
-        `attachment; filename="leseflux-export-${student.displayName}.json"`,
-      )
+      reply.header('Content-Disposition', `attachment; filename="${nameSafe}"; filename*=UTF-8''${nameEncoded}`)
+      await writeAuditLog(fastify.prisma, 'data.export', req.user.userId, student.id, { format: 'json' })
       return payload
     },
   )
@@ -1279,11 +1279,11 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         }),
       ]
 
+      const nameEncoded = encodeURIComponent(`leseflux-export-${student.displayName}.csv`)
+      const nameSafe = `leseflux-export-${student.displayName.replace(/[^\w.-]/g, '_')}.csv`
       reply.header('Content-Type', 'text/csv; charset=utf-8')
-      reply.header(
-        'Content-Disposition',
-        `attachment; filename="leseflux-export-${student.displayName}.csv"`,
-      )
+      reply.header('Content-Disposition', `attachment; filename="${nameSafe}"; filename*=UTF-8''${nameEncoded}`)
+      await writeAuditLog(fastify.prisma, 'data.export', req.user.userId, student.id, { format: 'csv' })
       return rows.join('\n')
     },
   )

@@ -35,7 +35,7 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
     try {
       await req.jwtVerify()
       if (req.user.role !== 'TEACHER' && req.user.role !== 'ADMIN') {
-        reply.status(403).send({ error: 'Keine Berechtigung' })
+        return reply.status(403).send({ error: 'Keine Berechtigung' })
       }
     } catch {
       reply.status(401).send({ error: 'Nicht angemeldet' })
