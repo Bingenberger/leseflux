@@ -1043,6 +1043,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.post('/diagnostics/:id/items', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
     const { id } = req.params as { id: string }
     const body = DiagnosticItemBodySchema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe', issues: body.error.issues })
@@ -1065,6 +1066,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.post('/diagnostics/:id/items/import', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
     const { id } = req.params as { id: string }
     const BodySchema = z.array(DiagnosticItemBodySchema).min(1).max(500)
     const body = BodySchema.safeParse(req.body)
@@ -1091,6 +1093,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.patch('/diagnostic-items/:id', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
     const { id } = req.params as { id: string }
     const body = DiagnosticItemBodySchema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe', issues: body.error.issues })
@@ -1105,6 +1108,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.delete('/diagnostic-items/:id', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
     const { id } = req.params as { id: string }
     const item = await fastify.prisma.diagnosticItem.findUnique({
       where: { id },

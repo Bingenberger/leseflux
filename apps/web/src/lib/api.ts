@@ -224,7 +224,7 @@ export const createDiagnosticItem = (diagnosticId: string, data: SaveDiagnosticI
   api.post<DiagnosticItemDetail>(`/teacher/diagnostics/${diagnosticId}/items`, data)
 
 export const importDiagnosticItems = (diagnosticId: string, data: SaveDiagnosticItemInput[]) =>
-  api.post<{ imported: number }>(`/teacher/diagnostics/${diagnosticId}/items/import`, data)
+  api.post<{ imported: number; skipped: number }>(`/teacher/diagnostics/${diagnosticId}/items/import`, data)
 
 export const updateDiagnosticItem = (id: string, data: SaveDiagnosticItemInput) =>
   api.patch<DiagnosticItemDetail>(`/teacher/diagnostic-items/${id}`, data)
