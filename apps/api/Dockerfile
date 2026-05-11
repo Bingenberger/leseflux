@@ -1,6 +1,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
 COPY tsconfig.base.json ./
 COPY apps/api/package*.json ./apps/api/
@@ -16,6 +18,8 @@ RUN cd apps/api && npx prisma generate
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+
+RUN apk add --no-cache openssl
 
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
