@@ -1,0 +1,902 @@
+[
+  {
+    "word": "Haus",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Hans",
+      "Hase"
+    ]
+  },
+  {
+    "word": "Schule",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Schale",
+      "Spule"
+    ]
+  },
+  {
+    "word": "Baum",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Raum",
+      "Zaum"
+    ]
+  },
+  {
+    "word": "Katze",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Tatze",
+      "Kiste"
+    ]
+  },
+  {
+    "word": "Hund",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Hand",
+      "Mund"
+    ]
+  },
+  {
+    "word": "Sonne",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Tonne",
+      "Sommer"
+    ]
+  },
+  {
+    "word": "Tisch",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Fisch",
+      "Tasche"
+    ]
+  },
+  {
+    "word": "Buch",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Tuch",
+      "Bauch"
+    ]
+  },
+  {
+    "word": "Blume",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Bluse",
+      "Bäume"
+    ]
+  },
+  {
+    "word": "Apfel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Ampel",
+      "Gipfel"
+    ]
+  },
+  {
+    "word": "Garten",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Karten",
+      "Raten"
+    ]
+  },
+  {
+    "word": "spielen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "spülen",
+      "spinnen"
+    ]
+  },
+  {
+    "word": "Fenster",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Förster",
+      "Polster"
+    ]
+  },
+  {
+    "word": "Milch",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kelch",
+      "Elch"
+    ]
+  },
+  {
+    "word": "Vogel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kugel",
+      "Segel"
+    ]
+  },
+  {
+    "word": "schnell",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "schrill",
+      "schmal"
+    ]
+  },
+  {
+    "word": "Fahrrad",
+    "syllables": 2,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Fahrbahn",
+      "Zahnrad"
+    ]
+  },
+  {
+    "word": "schreiben",
+    "syllables": 2,
+    "difficultyLevel": 3,
+    "distractors": [
+      "schreien",
+      "schieben"
+    ]
+  },
+  {
+    "word": "Banane",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Kanone",
+      "Badewanne"
+    ]
+  },
+  {
+    "word": "Schmetterling",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Schützling",
+      "Sperling"
+    ]
+  },
+  {
+    "word": "Maus",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Haus",
+      "Raus"
+    ]
+  },
+  {
+    "word": "Brot",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Boot",
+      "Rot"
+    ]
+  },
+  {
+    "word": "Uhr",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Ohr",
+      "nur"
+    ]
+  },
+  {
+    "word": "Saft",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Kraft",
+      "Sanft"
+    ]
+  },
+  {
+    "word": "Hose",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Hase",
+      "Rose"
+    ]
+  },
+  {
+    "word": "Nase",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Vase",
+      "Name"
+    ]
+  },
+  {
+    "word": "Auge",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Auto",
+      "Lauge"
+    ]
+  },
+  {
+    "word": "Ohr",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Uhr",
+      "Tor"
+    ]
+  },
+  {
+    "word": "Bein",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Stein",
+      "Wein"
+    ]
+  },
+  {
+    "word": "Arm",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Warm",
+      "Darm"
+    ]
+  },
+  {
+    "word": "Ball",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Fall",
+      "Wall"
+    ]
+  },
+  {
+    "word": "Bett",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Fett",
+      "Brett"
+    ]
+  },
+  {
+    "word": "Tür",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Tier",
+      "für"
+    ]
+  },
+  {
+    "word": "Bild",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Schild",
+      "wild"
+    ]
+  },
+  {
+    "word": "Rad",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Bad",
+      "Rat"
+    ]
+  },
+  {
+    "word": "Eis",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Ein",
+      "Bis"
+    ]
+  },
+  {
+    "word": "Zug",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Flug",
+      "Bug"
+    ]
+  },
+  {
+    "word": "Bus",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Kuss",
+      "Nuss"
+    ]
+  },
+  {
+    "word": "Kuh",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Schuh",
+      "zu"
+    ]
+  },
+  {
+    "word": "Bär",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Meer",
+      "schwer"
+    ]
+  },
+  {
+    "word": "Tiger",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Flieger",
+      "Täter"
+    ]
+  },
+  {
+    "word": "Löwe",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Möwe",
+      "Lupe"
+    ]
+  },
+  {
+    "word": "Affe",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Waffe",
+      "Neffe"
+    ]
+  },
+  {
+    "word": "Ente",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Ernte",
+      "Ende"
+    ]
+  },
+  {
+    "word": "Pferd",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Herd",
+      "Schwert"
+    ]
+  },
+  {
+    "word": "Frosch",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Frisch",
+      "Tisch"
+    ]
+  },
+  {
+    "word": "Teller",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Keller",
+      "Retter"
+    ]
+  },
+  {
+    "word": "Gabel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kabel",
+      "Nabel"
+    ]
+  },
+  {
+    "word": "Messer",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Wasser",
+      "Besser"
+    ]
+  },
+  {
+    "word": "Löffel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Gipfel",
+      "Büffel"
+    ]
+  },
+  {
+    "word": "Tasse",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kasse",
+      "Torte"
+    ]
+  },
+  {
+    "word": "Brille",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Grille",
+      "Pille"
+    ]
+  },
+  {
+    "word": "Schuhe",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Schule",
+      "Truhe"
+    ]
+  },
+  {
+    "word": "Jacke",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Hacke",
+      "Backe"
+    ]
+  },
+  {
+    "word": "Mütze",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Pfütze",
+      "Hitze"
+    ]
+  },
+  {
+    "word": "Schal",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Schaf",
+      "Tal"
+    ]
+  },
+  {
+    "word": "lesen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "leben",
+      "lösen"
+    ]
+  },
+  {
+    "word": "malen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "mahlen",
+      "holen"
+    ]
+  },
+  {
+    "word": "rennen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "kennen",
+      "brennen"
+    ]
+  },
+  {
+    "word": "singen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "springen",
+      "ringen"
+    ]
+  },
+  {
+    "word": "springen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "singen",
+      "bringen"
+    ]
+  },
+  {
+    "word": "weinen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Beinen",
+      "Steinen"
+    ]
+  },
+  {
+    "word": "lachen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "machen",
+      "Sachen"
+    ]
+  },
+  {
+    "word": "Auto",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Auge",
+      "Autor"
+    ]
+  },
+  {
+    "word": "Roller",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Rolle",
+      "Toller"
+    ]
+  },
+  {
+    "word": "Schiff",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Schaf",
+      "Schilf"
+    ]
+  },
+  {
+    "word": "Flugzeug",
+    "syllables": 2,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Fahrzeug",
+      "Feuerzeug"
+    ]
+  },
+  {
+    "word": "Rakete",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Pakete",
+      "Raupe"
+    ]
+  },
+  {
+    "word": "Sterne",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Steine",
+      "Stirne"
+    ]
+  },
+  {
+    "word": "Mond",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Mund",
+      "Hund"
+    ]
+  },
+  {
+    "word": "Wolke",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Wolle",
+      "Molke"
+    ]
+  },
+  {
+    "word": "Regen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Segen",
+      "Fegen"
+    ]
+  },
+  {
+    "word": "Schnee",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "See",
+      "Reh"
+    ]
+  },
+  {
+    "word": "Wind",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Kind",
+      "Rind"
+    ]
+  },
+  {
+    "word": "Wald",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Wild",
+      "Wand"
+    ]
+  },
+  {
+    "word": "Wiese",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Riese",
+      "Waise"
+    ]
+  },
+  {
+    "word": "Berg",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Zwerg",
+      "Burg"
+    ]
+  },
+  {
+    "word": "Fluss",
+    "syllables": 1,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Guss",
+      "Fuss"
+    ]
+  },
+  {
+    "word": "Stein",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Bein",
+      "Stern"
+    ]
+  },
+  {
+    "word": "Blatt",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Platt",
+      "Stadt"
+    ]
+  },
+  {
+    "word": "Farben",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Narben",
+      "Graben"
+    ]
+  },
+  {
+    "word": "Pinsel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Insel",
+      "Amsel"
+    ]
+  },
+  {
+    "word": "Papier",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Klavier",
+      "Tier"
+    ]
+  },
+  {
+    "word": "Schere",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Schwere",
+      "Beere"
+    ]
+  },
+  {
+    "word": "Kleber",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Leber",
+      "Kläger"
+    ]
+  },
+  {
+    "word": "Tafel",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Apfel",
+      "Waffel"
+    ]
+  },
+  {
+    "word": "Kreide",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kleide",
+      "Heide"
+    ]
+  },
+  {
+    "word": "Pause",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Puste",
+      "Hause"
+    ]
+  },
+  {
+    "word": "Freunde",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Freude",
+      "Fremde"
+    ]
+  },
+  {
+    "word": "Wasser",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Besser",
+      "Messer"
+    ]
+  },
+  {
+    "word": "Feuer",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Teuer",
+      "Steuer"
+    ]
+  },
+  {
+    "word": "Erde",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Herde",
+      "Ende"
+    ]
+  },
+  {
+    "word": "Luft",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Lust",
+      "Saft"
+    ]
+  },
+  {
+    "word": "Polizei",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Polster",
+      "Partei"
+    ]
+  },
+  {
+    "word": "Feuerwehr",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Feuerwerk",
+      "Feuerzeug"
+    ]
+  },
+  {
+    "word": "Krankenhaus",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Kaufhaus",
+      "Rathaus"
+    ]
+  },
+  {
+    "word": "Schokolade",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Schublade",
+      "Marmelade"
+    ]
+  },
+  {
+    "word": "Krokodil",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Kamel",
+      "Krokant"
+    ]
+  },
+  {
+    "word": "Elefant",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Elegant",
+      "Element"
+    ]
+  },
+  {
+    "word": "Pinguin",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Pelikan",
+      "Delfin"
+    ]
+  }
+]
