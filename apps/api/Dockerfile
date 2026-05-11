@@ -27,4 +27,4 @@ COPY apps/api/prisma ./prisma
 COPY packages/text ./packages/text
 
 EXPOSE 3001
-CMD ["node", "dist/server.js"]
+CMD ["node", "dist/src/server.js"]
