@@ -82,6 +82,8 @@ model Text {
   clozeTemplate  ClozeTemplate?
   exerciseRuns   ExerciseRun[]
   createdAt      DateTime        @default(now())
+
+  @@unique([title, targetLevel])
 }
 
 model TextQuestion {
@@ -123,6 +125,8 @@ model DiagnosticItem {
 
   diagnostic Diagnostic         @relation(fields: [diagnosticId], references: [id], onDelete: Cascade)
   answers    DiagnosticAnswer[]
+
+  @@unique([diagnosticId, sentence])
 }
 
 model DiagnosticResult {

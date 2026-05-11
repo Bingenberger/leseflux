@@ -123,7 +123,7 @@ export const getTextDetail = (id: string) =>
   api.get<TextDetail>(`/teacher/texts/${id}`)
 
 export const importTexts = (data: ImportTextInput[]) =>
-  api.post<{ imported: number }>('/teacher/texts/import', data)
+  api.post<{ imported: number; skipped: number }>('/teacher/texts/import', data)
 
 export const updateText = (id: string, data: SaveTextInput) =>
   api.patch<TextDetail>(`/teacher/texts/${id}`, data)
@@ -139,7 +139,7 @@ export const importAntonStudents = (payload: {
 }) => api.post<{ imported: number; skipped: string[] }>('/teacher/students/import-anton', payload)
 
 export const importFlashWords = (data: ImportFlashWordInput[]) =>
-  api.post<{ imported: number }>('/teacher/flash-words/import', data)
+  api.post<{ imported: number; updated: number }>('/teacher/flash-words/import', data)
 
 export const getFlashWords = (params?: { q?: string; level?: number | null }) =>
   api.get<FlashWordDetail[]>('/teacher/flash-words', { params })

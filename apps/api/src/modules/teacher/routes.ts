@@ -738,7 +738,9 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     if (!body.success) return reply.status(400).send({ error: 'Ungültiges Format', issues: body.error.issues })
 
     let imported = 0
+    let updated = 0
     for (const item of body.data) {
+      const existing = await fastify.prisma.flashWord.findUnique({ where: { word: item.word } })
       await fastify.prisma.flashWord.upsert({
         where: { word: item.word },
         update: {
@@ -748,10 +750,10 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         },
         create: item,
       })
-      imported++
+      if (existing) { updated++ } else { imported++ }
     }
 
-    return { imported }
+    return { imported, updated }
   })
 
   fastify.get('/flash-words', { preHandler: fastify.authenticateTeacher }, async (req) => {
@@ -823,7 +825,13 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     let imported = 0
+    let skipped = 0
     for (const t of parsed.data) {
+      const existing = await fastify.prisma.text.findUnique({
+        where: { title_targetLevel: { title: t.title, targetLevel: t.targetLevel } },
+      })
+      if (existing) { skipped++; continue }
+
       const wordCount = t.content.trim().split(/\s+/).filter(Boolean).length
       const lixScore = calculateLix(t.content)
       const estimatedSec = Math.round((wordCount / 80) * 60)
@@ -849,7 +857,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       imported++
     }
 
-    return { imported }
+    return { imported, skipped }
   })
 
   fastify.get('/texts/:id', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
@@ -1068,7 +1076,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     })
     if (!diagnostic) return reply.status(404).send({ error: 'Diagnostik nicht gefunden' })
 
-    await fastify.prisma.diagnosticItem.createMany({
+    const result = await fastify.prisma.diagnosticItem.createMany({
       data: body.data.map((item, index) => ({
         diagnosticId: id,
         sentence: item.sentence,
@@ -1076,9 +1084,10 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         difficulty: item.difficulty,
         orderIndex: diagnostic._count.items + index,
       })),
+      skipDuplicates: true,
     })
 
-    return { imported: body.data.length }
+    return { imported: result.count, skipped: body.data.length - result.count }
   })
 
   fastify.patch('/diagnostic-items/:id', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
