@@ -1,9 +1,10 @@
 import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { ChildLayout } from '../../components/shared/Layout.tsx'
 import { QrScanner } from '../../components/shared/QrScanner.tsx'
 import { Button } from '../../components/shared/Button.tsx'
-import { loginChild, loginChildCode } from '../../lib/api.ts'
+import { loginChild, loginChildCode, getPublicSettings } from '../../lib/api.ts'
 import { useAuthStore } from '../../store/authStore.ts'
 
 type Mode = 'choose' | 'scanning' | 'code'
@@ -18,13 +19,28 @@ export default function ChildLoginPage() {
   const [codeError, setCodeError] = useState('')
   const [codeLoading, setCodeLoading] = useState(false)
 
+  const { data: settings } = useQuery({
+    queryKey: ['public-settings'],
+    queryFn: () => getPublicSettings().then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const methods = settings?.childLoginMethods ?? 'QR_AND_CODE'
+  const showQr = methods !== 'CODE_ONLY'
+  const showCode = methods !== 'QR_ONLY'
+  const onlyOne = methods !== 'QR_AND_CODE'
+
+  // Bei nur einer verfügbaren Methode direkt in den entsprechenden Modus
+  const effectiveMode: Mode = onlyOne
+    ? (methods === 'QR_ONLY' ? 'scanning' : 'code')
+    : mode
+
   const handleScan = useCallback(
     async (scanned: string) => {
       if (scanState === 'loading') return
       setScanState('loading')
       try {
         const s = scanned.trim()
-        // Kurze alphanumerische Strings ohne Sonderzeichen → gedruckte Login-Codes
         const isLoginCode = /^[A-Z0-9]{4,8}$/i.test(s) && !s.includes('/')
         const loginFn = isLoginCode ? () => loginChildCode(s.toUpperCase()) : () => loginChild(s)
         const { data } = await loginFn()
@@ -63,24 +79,28 @@ export default function ChildLoginPage() {
       <div className="flex flex-col items-center justify-center flex-1 gap-8 p-8">
         <h1 className="text-3xl font-bold text-primary">Leseflux</h1>
 
-        {mode === 'choose' && (
+        {effectiveMode === 'choose' && (
           <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-            <button
-              onClick={() => setMode('scanning')}
-              className="w-full rounded-2xl bg-primary text-white text-xl font-bold py-6 min-h-[80px] shadow-md active:scale-95 transition-transform hover:bg-blue-700"
-            >
-              📷 QR-Code scannen
-            </button>
-            <button
-              onClick={() => setMode('code')}
-              className="w-full rounded-2xl border-2 border-primary text-primary text-xl font-bold py-6 min-h-[80px] active:scale-95 transition-transform hover:bg-blue-50"
-            >
-              🔑 Code eingeben
-            </button>
+            {showQr && (
+              <button
+                onClick={() => setMode('scanning')}
+                className="w-full rounded-2xl bg-primary text-white text-xl font-bold py-6 min-h-[80px] shadow-md active:scale-95 transition-transform hover:bg-blue-700"
+              >
+                QR-Code scannen
+              </button>
+            )}
+            {showCode && (
+              <button
+                onClick={() => setMode('code')}
+                className="w-full rounded-2xl border-2 border-primary text-primary text-xl font-bold py-6 min-h-[80px] active:scale-95 transition-transform hover:bg-blue-50"
+              >
+                Code eingeben
+              </button>
+            )}
           </div>
         )}
 
-        {mode === 'scanning' && (
+        {effectiveMode === 'scanning' && (
           <div className="flex flex-col items-center gap-4 w-full">
             <p className="text-xl text-gray-700 text-center">
               Halte deinen Lese-Ausweis vor die Kamera!
@@ -94,16 +114,18 @@ export default function ChildLoginPage() {
             {scanState === 'loading' && (
               <p className="text-primary font-medium">Einen Moment...</p>
             )}
-            <button
-              onClick={() => setMode('choose')}
-              className="text-sm text-gray-400 underline mt-2"
-            >
-              Zurück
-            </button>
+            {!onlyOne && (
+              <button
+                onClick={() => setMode('choose')}
+                className="text-sm text-gray-400 underline mt-2"
+              >
+                Zurück
+              </button>
+            )}
           </div>
         )}
 
-        {mode === 'code' && (
+        {effectiveMode === 'code' && (
           <form
             onSubmit={handleCodeSubmit}
             className="flex flex-col items-center gap-5 w-full max-w-xs"
@@ -129,13 +151,15 @@ export default function ChildLoginPage() {
             <Button type="submit" disabled={codeLoading} size="lg" className="w-full">
               {codeLoading ? 'Einen Moment...' : 'Anmelden'}
             </Button>
-            <button
-              type="button"
-              onClick={() => setMode('choose')}
-              className="text-sm text-gray-400 underline"
-            >
-              Zurück
-            </button>
+            {!onlyOne && (
+              <button
+                type="button"
+                onClick={() => setMode('choose')}
+                className="text-sm text-gray-400 underline"
+              >
+                Zurück
+              </button>
+            )}
           </form>
         )}
 

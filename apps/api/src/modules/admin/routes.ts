@@ -1,7 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { hash as argon2Hash } from 'argon2'
-import { CreateTeacherSchema } from '@leseflux/shared'
+import { CreateTeacherSchema, UpdateSettingsSchema } from '@leseflux/shared'
 import { z } from 'zod'
+
+const DEFAULTS = { childLoginMethods: 'QR_AND_CODE' } as const
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.patch(
@@ -174,6 +176,33 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
       return { imported, skipped }
     },
   )
+  fastify.get('/settings', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
+    const rows = await fastify.prisma.systemSetting.findMany()
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+    return { childLoginMethods: map.childLoginMethods ?? DEFAULTS.childLoginMethods }
+  })
+
+  fastify.patch('/settings', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    if (req.user.role !== 'ADMIN') return reply.status(403).send({ error: 'Nur Admins' })
+    const body = UpdateSettingsSchema.safeParse(req.body)
+    if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe' })
+
+    const updates = Object.entries(body.data).filter(([, v]) => v !== undefined) as [string, string][]
+    await Promise.all(
+      updates.map(([key, value]) =>
+        fastify.prisma.systemSetting.upsert({
+          where: { key },
+          update: { value },
+          create: { key, value },
+        }),
+      ),
+    )
+
+    const rows = await fastify.prisma.systemSetting.findMany()
+    const map = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+    return { childLoginMethods: map.childLoginMethods ?? DEFAULTS.childLoginMethods }
+  })
 }
 
 export default adminRoutes

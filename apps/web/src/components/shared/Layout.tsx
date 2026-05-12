@@ -17,6 +17,7 @@ const NAV_LINKS: { label: string; href: string; roles: string[]; icon: PhosphorI
   { label: 'Diagnostik', href: '/teacher/diagnostics', roles: ['TEACHER', 'ADMIN'], icon: 'gear' },
   { label: 'Vorlagen', href: '/teacher/templates', roles: ['TEACHER', 'ADMIN'], icon: 'listChecks' },
   { label: 'Lehrerkonten', href: '/admin/teachers', roles: ['ADMIN'], icon: 'userPlus' },
+  { label: 'Einstellungen', href: '/admin/settings', roles: ['ADMIN'], icon: 'gear' },
 ]
 
 export function TeacherLayout({ children, title }: TeacherLayoutProps) {

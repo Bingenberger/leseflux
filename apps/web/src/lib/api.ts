@@ -10,7 +10,7 @@ api.interceptors.response.use(
   (r) => r,
   (err) => {
     if (axios.isAxiosError(err) && err.response?.status === 401) {
-      window.location.href = '/login'
+      window.location.href = window.location.pathname.startsWith('/child') ? '/child/login' : '/login'
     }
     return Promise.reject(err)
   },
@@ -254,6 +254,18 @@ export const deleteSessionTemplate = (id: string) =>
   api.delete(`/teacher/session-templates/${id}`)
 
 // ── Admin ─────────────────────────────────────────────────────────────────
+
+// ── Einstellungen ─────────────────────────────────────────────────────────
+
+export type ChildLoginMethod = 'QR_AND_CODE' | 'QR_ONLY' | 'CODE_ONLY'
+export interface PublicSettings { childLoginMethods: ChildLoginMethod }
+
+export const getPublicSettings = () => api.get<PublicSettings>('/settings')
+export const getAdminSettings = () => api.get<PublicSettings>('/admin/settings')
+export const updateAdminSettings = (data: { childLoginMethods?: ChildLoginMethod }) =>
+  api.patch<PublicSettings>('/admin/settings', data)
+
+// ── Admin: Lehrkräfte ──────────────────────────────────────────────────────
 
 export const getTeachers = () => api.get<TeacherSummary[]>('/admin/teachers')
 

@@ -288,3 +288,9 @@ model AuditLog {
   metadata  Json?
   createdAt DateTime @default(now())
 }
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

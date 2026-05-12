@@ -19,13 +19,14 @@ import DiagnosticsPage from '../pages/teacher/DiagnosticsPage.tsx'
 import TemplatesPage from '../pages/teacher/TemplatesPage.tsx'
 import QrPrintPage from '../pages/teacher/QrPrintPage.tsx'
 import AdminTeachersPage from '../pages/admin/TeachersPage.tsx'
+import AdminSettingsPage from '../pages/admin/SettingsPage.tsx'
 
 // Child diagnostic
 import DiagnosticPage from '../pages/child/DiagnosticPage.tsx'
 
 function RootRedirect() {
   const user = useAuthStore((s) => s.user)
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/child/login" replace />
   if (user.role === 'CHILD') return <Navigate to="/child/home" replace />
   return <Navigate to="/teacher/dashboard" replace />
 }
@@ -39,6 +40,8 @@ export default function AppRoutes() {
         {/* Öffentliche Routen */}
         <Route path="/login" element={<TeacherLoginPage />} />
         <Route path="/child/login" element={<ChildLoginPage />} />
+
+        {/* Admin */}
 
         {/* Kind – Diagnostik */}
         <Route
@@ -147,6 +150,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']} redirectTo="/login">
               <AdminTeachersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/settings"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']} redirectTo="/login">
+              <AdminSettingsPage />
             </ProtectedRoute>
           }
         />
