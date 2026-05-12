@@ -1413,6 +1413,33 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       return { imported, skipped }
     },
   )
+
+  fastify.patch('/me/password', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    const BodySchema = z.object({
+      currentPassword: z.string().min(1),
+      newPassword: z.string().min(8, 'Neues Passwort muss mindestens 8 Zeichen haben.'),
+    })
+    const body = BodySchema.safeParse(req.body)
+    if (!body.success) return reply.status(400).send({ error: body.error.issues[0]?.message ?? 'Ungültige Eingabe' })
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { passwordHash: true },
+    })
+    if (!user?.passwordHash) return reply.status(400).send({ error: 'Passwort kann nicht geändert werden.' })
+
+    const valid = await argon2.verify(user.passwordHash, body.data.currentPassword)
+    if (!valid) return reply.status(400).send({ error: 'Aktuelles Passwort ist falsch.' })
+
+    const newHash = await argon2.hash(body.data.newPassword)
+    await fastify.prisma.user.update({
+      where: { id: req.user.userId },
+      data: { passwordHash: newHash },
+    })
+
+    await writeAuditLog(fastify.prisma, 'user.password_changed', req.user.userId, req.user.userId, {})
+    return { ok: true }
+  })
 }
 
 export default teacherRoutes

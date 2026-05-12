@@ -253,6 +253,9 @@ export const updateSessionTemplate = (id: string, data: Partial<SaveSessionTempl
 export const deleteSessionTemplate = (id: string) =>
   api.delete(`/teacher/session-templates/${id}`)
 
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  api.patch<{ ok: boolean }>('/teacher/me/password', { currentPassword, newPassword })
+
 // ── Admin ─────────────────────────────────────────────────────────────────
 
 // ── Einstellungen ─────────────────────────────────────────────────────────

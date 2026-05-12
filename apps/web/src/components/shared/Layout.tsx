@@ -1,9 +1,80 @@
 import { type ReactNode, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore.ts'
-import { logout } from '../../lib/api.ts'
+import { logout, changePassword } from '../../lib/api.ts'
 import { PhosphorIcon } from './PhosphorIcons.tsx'
 import type { PhosphorIconName } from './PhosphorIcons.tsx'
+
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [current, setCurrent] = useState('')
+  const [next, setNext] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    if (next.length < 8) { setError('Neues Passwort muss mindestens 8 Zeichen haben.'); return }
+    if (next !== confirm) { setError('Passwörter stimmen nicht überein.'); return }
+    setLoading(true)
+    try {
+      await changePassword(current, next)
+      setSuccess(true)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+      setError(msg ?? 'Fehler beim Ändern des Passworts.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">Passwort ändern</h2>
+        {success ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-success font-medium">Passwort erfolgreich geändert.</p>
+            <button onClick={onClose} className="rounded-lg bg-primary text-white px-4 py-2 text-sm font-medium">
+              Schließen
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Aktuelles Passwort
+              <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password"
+                className="rounded-lg border border-gray-300 px-3 py-2 font-normal" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Neues Passwort
+              <input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password"
+                className="rounded-lg border border-gray-300 px-3 py-2 font-normal" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-gray-700">
+              Neues Passwort bestätigen
+              <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password"
+                className="rounded-lg border border-gray-300 px-3 py-2 font-normal" />
+            </label>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <div className="flex gap-2 mt-1">
+              <button type="submit" disabled={loading}
+                className="flex-1 rounded-lg bg-primary text-white px-4 py-2 text-sm font-medium disabled:opacity-60">
+                {loading ? 'Speichern…' : 'Speichern'}
+              </button>
+              <button type="button" onClick={onClose}
+                className="flex-1 rounded-lg border border-gray-300 text-gray-600 px-4 py-2 text-sm font-medium">
+                Abbrechen
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
 
 interface TeacherLayoutProps {
   children: ReactNode
@@ -24,6 +95,7 @@ export function TeacherLayout({ children, title }: TeacherLayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, clearAuth } = useAuthStore()
+  const [showPasswordModal, setShowPasswordModal] = useState(false)
 
   const handleLogout = async () => {
     await logout().catch(() => {})
@@ -69,11 +141,18 @@ export function TeacherLayout({ children, title }: TeacherLayoutProps) {
             {title && (
               <span className="text-gray-400 hidden sm:inline">/ {title}</span>
             )}
-            <span className="font-medium">{user?.displayName}</span>
+            <button
+              onClick={() => setShowPasswordModal(true)}
+              className="font-medium text-gray-700 hover:text-primary underline-offset-2 hover:underline"
+              title="Passwort ändern"
+            >
+              {user?.displayName}
+            </button>
             <button onClick={handleLogout} className="inline-flex items-center gap-1.5 text-red-500 hover:underline">
               <PhosphorIcon name="signOut" size={16} />
               Abmelden
             </button>
+            {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} />}
           </div>
         </div>
       </header>

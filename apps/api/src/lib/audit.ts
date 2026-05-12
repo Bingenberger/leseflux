@@ -8,6 +8,7 @@ export type AuditAction =
   | 'student.import_anton'
   | 'data.export'
   | 'parental_consent.confirmed'
+  | 'user.password_changed'
 
 export async function writeAuditLog(
   prisma: PrismaClient,
