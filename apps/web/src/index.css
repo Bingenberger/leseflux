@@ -7,6 +7,20 @@
     @apply font-sans text-gray-900 bg-background;
   }
 
+  /* Grundschrift – selbst-gehostet (Dateien müssen in public/fonts/ liegen) */
+  @font-face {
+    font-family: 'Grundschrift';
+    src: url('/fonts/GrundschriftRegular.otf') format('opentype');
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Grundschrift';
+    src: url('/fonts/GrundschriftBold.otf') format('opentype');
+    font-weight: 700;
+    font-style: normal;
+  }
+
   /* OpenDyslexic – selbst-gehostet (Datei muss in public/fonts/ liegen) */
   @font-face {
     font-family: 'OpenDyslexic';

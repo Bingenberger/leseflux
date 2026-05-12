@@ -11,6 +11,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
+        grundschrift: ['"Grundschrift"', '"Atkinson Hyperlegible"', 'system-ui', 'sans-serif'],
         dyslexic: ['"OpenDyslexic"', 'system-ui', 'sans-serif'],
       },
       fontSize: {

@@ -4,14 +4,9 @@ import { useSettingsStore } from './store/settingsStore.ts'
 import AppRoutes from './routes/index.tsx'
 
 export default function App() {
-  const { lrsMode, highContrast } = useSettingsStore()
+  const { highContrast } = useSettingsStore()
 
-  const classes = [
-    lrsMode ? 'font-dyslexic' : 'font-sans',
-    highContrast ? 'high-contrast' : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const classes = highContrast ? 'high-contrast' : ''
 
   return (
     <QueryClientProvider client={queryClient}>

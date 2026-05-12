@@ -1,6 +1,7 @@
 import { type ReactNode, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore.ts'
+import { useSettingsStore } from '../../store/settingsStore.ts'
 import { logout, changePassword } from '../../lib/api.ts'
 import { PhosphorIcon } from './PhosphorIcons.tsx'
 import type { PhosphorIconName } from './PhosphorIcons.tsx'
@@ -106,7 +107,7 @@ export function TeacherLayout({ children, title }: TeacherLayoutProps) {
   const visibleLinks = NAV_LINKS.filter((l) => user?.role && l.roles.includes(user.role))
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="font-sans min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-0">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
@@ -169,7 +170,9 @@ interface ChildLayoutProps {
 export function ChildLayout({ children, showBack }: ChildLayoutProps) {
   const navigate = useNavigate()
   const { user, clearAuth } = useAuthStore()
+  const { lrsMode } = useSettingsStore()
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const fontClass = lrsMode ? 'font-dyslexic' : 'font-grundschrift'
 
   const handleLogout = async () => {
     await logout().catch(() => {})
@@ -178,7 +181,7 @@ export function ChildLayout({ children, showBack }: ChildLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`${fontClass} min-h-screen bg-background flex flex-col`}>
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-background">
         <div className="flex items-center gap-3">

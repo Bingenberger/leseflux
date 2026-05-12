@@ -1,6 +1,20 @@
-OpenDyslexic-Schriftdateien hier ablegen:
+Schriftdateien hier ablegen:
+
+── Grundschrift (Standard-Kinderschrift) ─────────────────────────────────────
+  GrundschriftRegular.otf
+  GrundschriftBold.otf
+
+  Download: https://fontlibrary.org/en/font/grundschrift  →  "Download" klicken
+  Lizenz: SIL Open Font License 1.1
+
+── OpenDyslexic (LRS-Modus) ──────────────────────────────────────────────────
   OpenDyslexic-Regular.otf
   OpenDyslexic-Bold.otf
 
-Lizenz: SIL Open Font License 1.1
-Download: https://opendyslexic.org  (Abschnitt "Download")
+  Download: https://opendyslexic.org  →  "Download"
+  Lizenz: Bitstream Vera Fonts License
+
+── Atkinson Hyperlegible (Lehrkräfte-/Admin-Bereich) ─────────────────────────
+  Wird über Google Fonts / CDN geladen oder kann hier als
+  AtkinsonHyperlegible-Regular.woff2 / AtkinsonHyperlegible-Bold.woff2
+  abgelegt und in index.css referenziert werden.

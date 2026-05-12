@@ -30,11 +30,6 @@ export default function ChildLoginPage() {
   const showCode = methods !== 'QR_ONLY'
   const onlyOne = methods !== 'QR_AND_CODE'
 
-  // Bei nur einer verfügbaren Methode direkt in den entsprechenden Modus
-  const effectiveMode: Mode = onlyOne
-    ? (methods === 'QR_ONLY' ? 'scanning' : 'code')
-    : mode
-
   const handleScan = useCallback(
     async (scanned: string) => {
       if (scanState === 'loading') return
@@ -79,7 +74,7 @@ export default function ChildLoginPage() {
       <div className="flex flex-col items-center justify-center flex-1 gap-8 p-8">
         <h1 className="text-3xl font-bold text-primary">Leseflux</h1>
 
-        {effectiveMode === 'choose' && (
+        {mode === 'choose' && (
           <div className="flex flex-col items-center gap-4 w-full max-w-xs">
             {showQr && (
               <button
@@ -100,7 +95,7 @@ export default function ChildLoginPage() {
           </div>
         )}
 
-        {effectiveMode === 'scanning' && (
+        {mode === 'scanning' && (
           <div className="flex flex-col items-center gap-4 w-full">
             <p className="text-xl text-gray-700 text-center">
               Halte deinen Lese-Ausweis vor die Kamera!
@@ -125,7 +120,7 @@ export default function ChildLoginPage() {
           </div>
         )}
 
-        {effectiveMode === 'code' && (
+        {mode === 'code' && (
           <form
             onSubmit={handleCodeSubmit}
             className="flex flex-col items-center gap-5 w-full max-w-xs"
