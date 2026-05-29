@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsup src/server.ts scripts/seed.ts scripts/seedTexts.ts scripts/seedTemplates.ts scripts/seedFlashWords.ts scripts/seedClozeTemplates.ts scripts/migrate-v1-to-v2.ts --format cjs --out-dir dist",
+    "build": "tsup src/server.ts scripts/seed.ts scripts/seedTexts.ts scripts/seedTemplates.ts scripts/seedFlashWords.ts scripts/seedClozeTemplates.ts scripts/migrate-v1-to-v2.ts scripts/backfillQrTokenRaw.ts --format cjs --out-dir dist",
     "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
