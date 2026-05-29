@@ -96,6 +96,9 @@ export const regenerateStudentQr = (id: string) =>
 export const regenerateStudentCode = (id: string) =>
   api.post<{ loginCode: string }>(`/teacher/students/${id}/regenerate-code`)
 
+export const setStudentQrToken = (id: string, qrToken: string) =>
+  api.patch<{ ok: boolean }>(`/teacher/students/${id}/qr-token`, { qrToken })
+
 export const getStudentsOverview = (classId: string) =>
   api.get<StudentOverview[]>(`/teacher/classes/${classId}/students-overview`)
 
@@ -464,6 +467,7 @@ export interface StudentOverview {
   id: string
   displayName: string
   loginCode?: string | null
+  qrTokenRaw?: string | null
   classId?: string | null
   className?: string | null
   classSessionTemplateId?: string | null

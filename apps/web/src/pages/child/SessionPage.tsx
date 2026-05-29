@@ -70,6 +70,7 @@ export default function SessionPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [selfPacedDurationMs, setSelfPacedDurationMs] = useState<number | null>(null)
   const [countdown, setCountdown] = useState(COUNTDOWN_START)
+  const [, setTick] = useState(0)
   const durationMs = sessionData?.exercises.reduce(
     (sum, exercise) => sum + exercise.targetDurationSec * 1000,
     0,
@@ -134,6 +135,12 @@ export default function SessionPage() {
     const timer = window.setTimeout(() => setCountdown((value) => value - 1), 1000)
     return () => window.clearTimeout(timer)
   }, [phase, countdown])
+
+  useEffect(() => {
+    if (phase !== 'reading' && phase !== 'quiz') return undefined
+    const id = setInterval(() => setTick((t) => t + 1), 30_000)
+    return () => clearInterval(id)
+  }, [phase])
 
   const handleReadingComplete = useCallback(() => {
     setPhase('quiz')
@@ -526,18 +533,24 @@ export default function SessionPage() {
     1,
   )
   const progressPct = Math.min(100, (elapsed / totalProgramMs) * 100)
+  const remainingMin = Math.ceil(Math.max(0, totalProgramMs - elapsed) / 60_000)
 
   return (
     <ChildLayout>
-      {/* Header: Titel + Fortschrittsbalken + Pause */}
+      {/* Header: Titel + Fortschrittsbalken + Restzeit + Pause */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
         <div className="flex-1 mr-4">
-          <p className="text-xs text-gray-400 mb-1">
-            {current.type === 'FADING' || current.type === 'CLOZE' || current.type === 'SELF_PACED'
-              ? current.text.title
-              : 'Wortblitz'}
-          </p>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-400 truncate max-w-[60%]">
+              {current.type === 'FADING' || current.type === 'CLOZE' || current.type === 'SELF_PACED'
+                ? current.text.title
+                : 'Wortblitz'}
+            </p>
+            <p className="text-xs font-semibold text-primary shrink-0 ml-2">
+              {remainingMin <= 1 ? 'Fast fertig!' : `Noch ca. ${remainingMin} Min.`}
+            </p>
+          </div>
+          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-primary rounded-full transition-all duration-1000"
               style={{ width: `${progressPct}%` }}
@@ -546,7 +559,7 @@ export default function SessionPage() {
         </div>
         <button
           onClick={() => setIsPaused((p) => !p)}
-          className="text-primary font-bold text-lg px-4 py-2 min-h-[44px] min-w-[44px]"
+          className="text-primary font-bold text-lg px-4 py-2 min-h-[44px] min-w-[44px] ml-4"
           aria-label={isPaused ? 'Weiterlesen' : 'Pause'}
         >
           {isPaused ? '▶' : '⏸'}

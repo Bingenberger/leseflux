@@ -13,6 +13,7 @@ import {
   getStudentExercises,
   getStudentSessions,
   regenerateStudentCode,
+  setStudentQrToken,
   updateStudentTemplate,
 } from '../../lib/api.ts'
 import type { DiagnosticResultDetail, ExerciseType } from '../../lib/api.ts'
@@ -146,6 +147,8 @@ export default function StudentDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [qrTokenEdit, setQrTokenEdit] = useState<string | null>(null)
+  const [qrTokenSaved, setQrTokenSaved] = useState(false)
 
   const { data: student, isLoading: loadingStudent } = useQuery({
     queryKey: ['student-detail', id],
@@ -182,6 +185,16 @@ export default function StudentDetailPage() {
   const regenCode = useMutation({
     mutationFn: () => regenerateStudentCode(id!),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['student-detail', id] }),
+  })
+
+  const saveQrToken = useMutation({
+    mutationFn: (token: string) => setStudentQrToken(id!, token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student-detail', id] })
+      setQrTokenEdit(null)
+      setQrTokenSaved(true)
+      setTimeout(() => setQrTokenSaved(false), 3000)
+    },
   })
 
   const templateMutation = useMutation({
@@ -287,6 +300,64 @@ export default function StudentDetailPage() {
               {regenCode.isPending ? '…' : 'Neu generieren'}
             </button>
           </div>}
+
+          {/* Anton-QR-Token */}
+          {activeTab === 'overview' && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">
+                    Anton-QR-Code
+                  </p>
+                  {qrTokenEdit === null ? (
+                    <p className="font-mono text-sm text-gray-800 break-all">
+                      {student.qrTokenRaw ?? <span className="text-gray-400 italic">nicht gesetzt</span>}
+                    </p>
+                  ) : (
+                    <input
+                      type="text"
+                      value={qrTokenEdit}
+                      onChange={(e) => setQrTokenEdit(e.target.value)}
+                      className="w-full font-mono text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary"
+                      placeholder="QR-Code-Inhalt vom Ausweis eingeben"
+                      autoFocus
+                    />
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Der gescannte Text vom Anton-Lese-Ausweis.
+                  </p>
+                  {qrTokenSaved && <p className="text-xs text-success font-medium mt-1">Gespeichert.</p>}
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  {qrTokenEdit === null ? (
+                    <button
+                      onClick={() => setQrTokenEdit(student.qrTokenRaw ?? '')}
+                      className="inline-flex items-center gap-2 text-sm text-primary border border-primary rounded-lg px-4 py-2 hover:bg-blue-50"
+                    >
+                      <PhosphorIcon name="pencilSimple" size={16} />
+                      Bearbeiten
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => saveQrToken.mutate(qrTokenEdit)}
+                        disabled={saveQrToken.isPending || qrTokenEdit.trim() === ''}
+                        className="inline-flex items-center gap-2 text-sm bg-primary text-white rounded-lg px-4 py-2 hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {saveQrToken.isPending ? '…' : 'Speichern'}
+                      </button>
+                      <button
+                        onClick={() => setQrTokenEdit(null)}
+                        className="inline-flex items-center gap-2 text-sm border border-gray-300 text-gray-600 rounded-lg px-4 py-2 hover:bg-gray-50"
+                      >
+                        Abbrechen
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {activeTab === 'overview' && (
             <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -297,6 +297,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
         classId: body.data.classId ?? null,
         birthYear: body.data.birthYear ?? null,
         qrTokenHash,
+        qrTokenRaw: qrToken,
         loginCode,
       },
     })
@@ -339,10 +340,36 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       const qrToken = generateQrToken()
       const qrTokenHash = hashQrToken(qrToken)
 
-      await fastify.prisma.user.update({ where: { id }, data: { qrTokenHash } })
+      await fastify.prisma.user.update({ where: { id }, data: { qrTokenHash, qrTokenRaw: qrToken } })
       await writeAuditLog(fastify.prisma, 'student.qr_regenerate', req.user.userId, id)
 
       return { qrToken }
+    },
+  )
+
+  fastify.patch(
+    '/students/:id/qr-token',
+    { preHandler: fastify.authenticateTeacher },
+    async (req, reply) => {
+      const { id } = req.params as { id: string }
+      const BodySchema = z.object({ qrToken: z.string().min(1) })
+      const body = BodySchema.safeParse(req.body)
+      if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe' })
+
+      const isAdmin = req.user.role === 'ADMIN'
+      const student = await fastify.prisma.user.findFirst({
+        where: isAdmin ? { id, role: 'CHILD' } : { id, role: 'CHILD', class: { teacherId: req.user.userId } },
+      })
+      if (!student) return reply.status(404).send({ error: 'Schüler nicht gefunden' })
+
+      const qrTokenHash = hashQrToken(body.data.qrToken)
+      await fastify.prisma.user.update({
+        where: { id },
+        data: { qrTokenHash, qrTokenRaw: body.data.qrToken },
+      })
+      await writeAuditLog(fastify.prisma, 'student.qr_set_manual', req.user.userId, id)
+
+      return { ok: true }
     },
   )
 
@@ -394,6 +421,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       id: student.id,
       displayName: student.displayName,
       loginCode: student.loginCode ?? null,
+      qrTokenRaw: student.qrTokenRaw ?? null,
       classId: student.classId,
       className: student.class?.name ?? null,
       classSessionTemplateId: student.class?.sessionTemplateId ?? null,

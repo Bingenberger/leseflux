@@ -4,6 +4,7 @@ export type AuditAction =
   | 'student.create'
   | 'student.delete'
   | 'student.qr_regenerate'
+  | 'student.qr_set_manual'
   | 'student.code_regenerate'
   | 'student.import_anton'
   | 'data.export'
