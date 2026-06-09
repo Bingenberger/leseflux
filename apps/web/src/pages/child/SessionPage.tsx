@@ -465,13 +465,12 @@ export default function SessionPage() {
 
           {offerDiagnostic ? (
             <div className="flex flex-col items-center gap-3 w-full">
-              <p className="text-sm text-gray-500 text-center">Zeit für einen kurzen Lesetest!</p>
+              <p className="text-sm text-gray-500 text-center">
+                Super! Jetzt machen wir noch einen kurzen Lesetest.
+              </p>
               <Button size="lg" onClick={() => navigate('/child/diagnostic/intermediate')} className="w-full">
-                Lesetest machen
+                Lesetest starten
               </Button>
-              <button onClick={() => navigate('/child/home')} className="text-sm text-gray-400 underline">
-                Jetzt nicht
-              </button>
             </div>
           ) : (
             <Button size="lg" onClick={() => navigate('/child/home')} className="w-full">

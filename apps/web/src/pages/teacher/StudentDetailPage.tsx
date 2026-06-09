@@ -236,7 +236,11 @@ export default function StudentDetailPage() {
       {student && (
         <div className="flex flex-col gap-6">
           {/* Kennzahlen */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <StatCard
+              label="Diagnosetempo"
+              value={student.lastDiagnosticWpm ? `${Math.round(student.lastDiagnosticWpm)} WPM` : '–'}
+            />
             <StatCard
               label="Zieltempo"
               value={student.currentTargetWpm ? `${student.currentTargetWpm} WPM` : '–'}

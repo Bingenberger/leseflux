@@ -292,7 +292,7 @@ export const importTeachers = (
 // ── Diagnostik ────────────────────────────────────────────────────────────
 
 export const checkDiagnostic = () =>
-  api.get<{ needsEntry: boolean }>('/diagnostic/check')
+  api.get<{ needsEntry: boolean; needsIntermediate: boolean }>('/diagnostic/check')
 
 export const startDiagnostic = (type: 'ENTRY' | 'INTERMEDIATE') =>
   api.post<StartDiagnosticResponse>('/diagnostic/start', { type })
@@ -468,6 +468,7 @@ export interface StudentOverview {
   displayName: string
   loginCode?: string | null
   qrTokenRaw?: string | null
+  lastDiagnosticWpm?: number | null
   classId?: string | null
   className?: string | null
   classSessionTemplateId?: string | null

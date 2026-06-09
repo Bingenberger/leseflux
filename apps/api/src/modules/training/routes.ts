@@ -340,7 +340,19 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
         averageQuizAccuracy: progress.averageQuizAccuracy ?? accuracy,
         offerIntermediateDiagnostic: false,
       }
-      const offerIntermediateDiagnostic = result.totalSessions % diagnosticInterval === 0
+
+      // Zwischendiagnostik anbieten, solange sie für das aktuelle Intervall noch aussteht.
+      // Damit bleibt das Angebot nach jedem Training bestehen, bis das Kind die Diagnostik
+      // tatsächlich abschließt – anstatt es nur einmal zu zeigen.
+      const completedIntermediateCount = await fastify.prisma.diagnosticResult.count({
+        where: {
+          userId,
+          finishedAt: { not: null },
+          diagnostic: { type: 'INTERMEDIATE' },
+        },
+      })
+      const nextDueSessions = (completedIntermediateCount + 1) * diagnosticInterval
+      const offerIntermediateDiagnostic = result.totalSessions >= nextDueSessions
 
       // Streak berechnen
       const today = new Date()

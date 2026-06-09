@@ -409,6 +409,12 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
           take: 1,
           include: { exerciseRuns: true },
         },
+        diagnostics: {
+          where: { estimatedWpm: { not: null } },
+          orderBy: { finishedAt: 'desc' },
+          take: 1,
+          select: { estimatedWpm: true },
+        },
       },
     })
     if (!student) return reply.status(404).send({ error: 'Schüler nicht gefunden' })
@@ -427,6 +433,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       classSessionTemplateId: student.class?.sessionTemplateId ?? null,
       sessionTemplateId: student.sessionTemplateId,
       sessionTemplate: student.sessionTemplate,
+      lastDiagnosticWpm: student.diagnostics[0]?.estimatedWpm ?? null,
       currentTargetWpm: student.progress?.fadingTargetWpm ?? null,
       totalSessions: student.progress?.totalSessions ?? 0,
       averageQuizAccuracy: student.progress?.averageQuizAccuracy ?? null,

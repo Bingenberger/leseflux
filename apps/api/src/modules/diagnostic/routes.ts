@@ -51,13 +51,29 @@ function selectBalancedItems<T extends { difficulty: number }>(items: T[], itemC
 }
 
 const diagnosticRoutes: FastifyPluginAsync = async (fastify) => {
-  // Prüft ob Eingangsdiagnostik noch aussteht
+  // Prüft ob Eingangs- oder Zwischendiagnostik aussteht
   fastify.get('/check', { preHandler: fastify.authenticate }, async (req) => {
     const userId = req.user.userId
-    const hasEntry = await fastify.prisma.diagnosticResult.findFirst({
-      where: { userId, diagnostic: { type: 'ENTRY' }, finishedAt: { not: null } },
-    })
-    return { needsEntry: !hasEntry }
+
+    const [hasEntry, completedIntermediateCount, progress, intermediateDiagnostic] = await Promise.all([
+      fastify.prisma.diagnosticResult.findFirst({
+        where: { userId, diagnostic: { type: 'ENTRY' }, finishedAt: { not: null } },
+      }),
+      fastify.prisma.diagnosticResult.count({
+        where: { userId, diagnostic: { type: 'INTERMEDIATE' }, finishedAt: { not: null } },
+      }),
+      fastify.prisma.userProgress.findUnique({ where: { userId } }),
+      fastify.prisma.diagnostic.findFirst({
+        where: { type: 'INTERMEDIATE' },
+        select: { intervalSessions: true },
+      }),
+    ])
+
+    const diagnosticInterval = intermediateDiagnostic?.intervalSessions ?? adaptiveConfig.diagnostic.intervalSessions
+    const totalSessions = progress?.totalSessions ?? 0
+    const needsIntermediate = !!hasEntry && totalSessions >= (completedIntermediateCount + 1) * diagnosticInterval
+
+    return { needsEntry: !hasEntry, needsIntermediate }
   })
 
   // Startet eine Diagnostik-Sitzung, gibt Items zurück (ohne isNonsense)

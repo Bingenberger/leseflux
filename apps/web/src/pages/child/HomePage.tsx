@@ -50,12 +50,13 @@ export default function ChildHomePage() {
   })
 
   const needsEntry = diagCheck?.needsEntry ?? false
+  const needsIntermediate = diagCheck?.needsIntermediate ?? false
   const todayDone = progress?.todayDone ?? false
 
   const { data: todayProgram } = useQuery({
     queryKey: ['today-program'],
     queryFn: () => getTodayProgram().then((r) => r.data),
-    enabled: !needsEntry && !todayDone,
+    enabled: !needsEntry && !needsIntermediate && !todayDone,
   })
 
   const handleStart = () => {
@@ -117,7 +118,7 @@ export default function ChildHomePage() {
           </div>
         )}
 
-        {/* Eingangstest / Heute schon geübt / Trainings-Start */}
+        {/* Eingangstest / Zwischendiagnostik / Heute schon geübt / Trainings-Start */}
         {needsEntry ? (
           <div className="w-full bg-blue-50 border-2 border-primary rounded-2xl p-6 flex flex-col items-center gap-4">
             <span className="text-5xl">📋</span>
@@ -126,6 +127,17 @@ export default function ChildHomePage() {
               Bevor du lesen kannst, machen wir einen kurzen Test – das dauert nur etwa eine Minute!
             </p>
             <Button size="lg" onClick={() => navigate('/child/diagnostic/entry')} className="w-full">
+              Jetzt Lesetest starten
+            </Button>
+          </div>
+        ) : needsIntermediate ? (
+          <div className="w-full bg-blue-50 border-2 border-primary rounded-2xl p-6 flex flex-col items-center gap-4">
+            <span className="text-5xl">📋</span>
+            <p className="text-xl font-bold text-primary text-center">Kurzer Lesetest</p>
+            <p className="text-gray-600 text-center leading-relaxed">
+              Heute machen wir zuerst einen kurzen Test – das dauert nur etwa eine Minute!
+            </p>
+            <Button size="lg" onClick={() => navigate('/child/diagnostic/intermediate')} className="w-full">
               Jetzt Lesetest starten
             </Button>
           </div>
