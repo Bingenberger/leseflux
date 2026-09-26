@@ -22,6 +22,7 @@ const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FLASH_WORD: 'Wortblitz',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Eigentempo',
+  REPEATED_READING: 'Wiederholtes Lesen',
 }
 
 function formatDate(iso: string) {

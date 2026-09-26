@@ -10,6 +10,7 @@ import {
   readingQuizAccuracy,
   runAdaptiveEngine,
   runFlashAdaptiveEngine,
+  updateRollingAccuracy,
 } from './adaptive.js'
 import { adaptiveConfig } from '../../config.js'
 import { toOriginalOptionIndex } from '../../services/quizOptions.js'
@@ -264,9 +265,15 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
 
     const correctCount = responseRecords.filter((a) => a.isCorrect).length
     const accuracy = responseRecords.length > 0 ? correctCount / responseRecords.length : 0
-    const measuredWpm = run.exerciseType === 'SELF_PACED' && readingDone && readingDone.durationMs > 0
+    // Eigentempo-Messung: Messtag bzw. erster (kalter) Durchgang beim wiederholten Lesen
+    const measuresOwnPace = run.exerciseType === 'SELF_PACED' || run.exerciseType === 'REPEATED_READING'
+    const measuredWpm = measuresOwnPace && readingDone && readingDone.durationMs > 0
       ? Math.round((readingDone.wordCount / (readingDone.durationMs / 60_000)) * 10) / 10
       : null
+    const passRecords = responses.filter(
+      (a): a is { event: 'READING_PASS'; pass: number; wpm: number; durationMs: number } =>
+        'event' in a && a.event === 'READING_PASS',
+    )
 
     await fastify.prisma.exerciseRun.update({
       where: { id: runId },
@@ -276,11 +283,14 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
         itemsTotal: responseRecords.length,
         itemsCorrect: correctCount,
         measuredWpm,
-        responses: responseRecords,
+        responses: [...responseRecords, ...passRecords],
       },
     })
 
-    if (run.exerciseType === 'SELF_PACED' && measuredWpm !== null) {
+    // Nur plausible Messungen in den Eigentempo-Durchschnitt (sofortiges „Fertig“ verfälscht sonst)
+    const { minPlausibleWpm, maxPlausibleWpm } = adaptiveConfig.measurementCalibration
+    if (measuresOwnPace && measuredWpm !== null
+      && measuredWpm >= minPlausibleWpm && measuredWpm <= maxPlausibleWpm) {
       const progress = await fastify.prisma.userProgress.findUnique({ where: { userId } })
       if (progress) {
         const alpha = 0.25
@@ -349,15 +359,21 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
       // Das Fading-Tempo richtet sich nur nach dem Textverständnis beim Fading-Lesen –
       // Wortblitz und Lückentext haben eigene Steuerungen und dürfen es nicht verzerren.
       const fadingQuizAccuracy = readingQuizAccuracy(fadingRuns)
-      const measurementRuns = session.exerciseRuns.filter((r) => r.exerciseType === 'SELF_PACED')
+      // Eigentempo-Messungen: Messtag und kalter erster Durchgang beim wiederholten Lesen
+      const measurementRuns = session.exerciseRuns.filter(
+        (r) => r.exerciseType === 'SELF_PACED' || r.exerciseType === 'REPEATED_READING',
+      )
+      const measurementQuizAccuracy = readingQuizAccuracy(measurementRuns)
       const result = fadingQuizAccuracy !== null
         ? runAdaptiveEngine(progress, fadingQuizAccuracy, level)
         : {
-            // Messtag: Ziel am tatsächlich gemessenen Lesetempo kalibrieren
+            // Kein Fading-Quiz: Ziel am tatsächlich gemessenen Lesetempo kalibrieren
             fadingTargetWpm: calibrateFromMeasurement(progress.fadingTargetWpm, measurementRuns, minWpm),
             fadingSessionsSinceIncrease: progress.fadingSessionsSinceIncrease,
             totalSessions: progress.totalSessions + 1,
-            averageQuizAccuracy: progress.averageQuizAccuracy,
+            averageQuizAccuracy: measurementQuizAccuracy !== null
+              ? updateRollingAccuracy(progress.averageQuizAccuracy, measurementQuizAccuracy)
+              : progress.averageQuizAccuracy,
             offerIntermediateDiagnostic: false,
           }
 

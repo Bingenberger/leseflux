@@ -41,6 +41,8 @@ model Class {
   id                String   @id @default(uuid())
   name              String
   schoolYear        String
+  /// Klassenstufe (1–6); bestimmt die Textstufe. null → aus dem Klassennamen abgeleitet
+  gradeLevel        Int?
   teacherId         String
   sessionTemplateId String?
 
@@ -208,6 +210,7 @@ enum ExerciseType {
   FLASH_WORD
   CLOZE
   SELF_PACED
+  REPEATED_READING
 }
 
 model FlashWord {

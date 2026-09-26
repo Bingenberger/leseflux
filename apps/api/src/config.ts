@@ -30,6 +30,30 @@ export const adaptiveConfig = {
     minPlausibleWpm: 20,
     maxPlausibleWpm: 250,
   },
+  /** Wiederholtes Lesen (Dreischritt): 1. Eigentempo → Fragen → 2./3. Fading-Durchgang am selben Text */
+  repeatedReading: {
+    /** Tempo der Fading-Durchgänge 2 und 3 relativ zur Basis (Kaltlesetempo bzw. Fading-Ziel) */
+    passFactors: [1.1, 1.2],
+    /** Das Kaltlesetempo zählt als Basis nur innerhalb dieses Bandes um das Fading-Ziel */
+    baseMinFactor: 0.8,
+    baseMaxFactor: 1.2,
+  },
+  /** Zwischendiagnostik verrechnet ihr Ergebnis mit dem bisherigen Ziel, statt es zu überschreiben */
+  intermediateDiagnostic: {
+    /** Gewicht des Diagnoseergebnisses (0–1) */
+    weight: 0.5,
+    /** Maximale Änderung des Fading-Ziels pro Zwischendiagnostik in WPM */
+    maxChangeWpm: 15,
+  },
+  /** Textstufe aus Klassenstufe und Verständnis (nicht aus dem Tempo) */
+  textLevel: {
+    /** Unter dieser Verständnisgenauigkeit eine Stufe leichter */
+    easierBelow: 0.5,
+    /** Ab dieser Verständnisgenauigkeit eine Stufe schwerer */
+    harderFrom: 0.9,
+    minLevel: 2,
+    maxLevel: 4,
+  },
   diagnostic: { intervalSessions: 10 },
   /** Initiales Fading-Tempo = Faktor × diagnostisch ermittelte WPM */
   initialWpmFactor: 0.9,

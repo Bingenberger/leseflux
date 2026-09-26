@@ -5,50 +5,8 @@ import {
   estimateWpmFromDiagnostic,
 } from '@leseflux/shared'
 import { adaptiveConfig } from '../../config.js'
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    const current = a[i]!
-    a[i] = a[j]!
-    a[j] = current
-  }
-  return a
-}
-
-function selectBalancedItems<T extends { difficulty: number }>(items: T[], itemCount: number): T[] {
-  const byDifficulty = new Map<number, T[]>()
-  for (const item of items) {
-    const bucket = byDifficulty.get(item.difficulty) ?? []
-    bucket.push(item)
-    byDifficulty.set(item.difficulty, bucket)
-  }
-
-  const difficulties = [...byDifficulty.keys()].sort((a, b) => a - b)
-  if (difficulties.length === 0) return []
-
-  const shuffledBuckets = new Map(
-    difficulties.map((difficulty) => [difficulty, shuffle(byDifficulty.get(difficulty)!)]),
-  )
-  const base = Math.floor(itemCount / difficulties.length)
-  let remainder = itemCount % difficulties.length
-  const selected: T[] = []
-
-  for (const difficulty of difficulties) {
-    const take = base + (remainder > 0 ? 1 : 0)
-    remainder = Math.max(0, remainder - 1)
-    selected.push(...(shuffledBuckets.get(difficulty) ?? []).splice(0, take))
-  }
-
-  if (selected.length < itemCount) {
-    const selectedIds = new Set(selected)
-    const remaining = shuffle(items.filter((item) => !selectedIds.has(item)))
-    selected.push(...remaining.slice(0, itemCount - selected.length))
-  }
-
-  return shuffle(selected).slice(0, itemCount)
-}
+import { blendDiagnosticTarget } from '../training/adaptive.js'
+import { selectBalancedItems } from './itemSelection.js'
 
 const diagnosticRoutes: FastifyPluginAsync = async (fastify) => {
   // Prüft ob Eingangs- oder Zwischendiagnostik aussteht
@@ -87,7 +45,17 @@ const diagnosticRoutes: FastifyPluginAsync = async (fastify) => {
     })
     if (!diagnostic) return reply.status(404).send({ error: 'Diagnostik nicht gefunden' })
 
-    const selectedItems = selectBalancedItems(diagnostic.items, diagnostic.itemCount)
+    // Parallelformen: bereits beurteilte Sätze nur, wenn neue fehlen
+    const seenAnswers = await fastify.prisma.diagnosticAnswer.findMany({
+      where: { result: { userId: req.user.userId }, item: { diagnosticId: diagnostic.id } },
+      select: { itemId: true },
+      distinct: ['itemId'],
+    })
+    const selectedItems = selectBalancedItems(
+      diagnostic.items,
+      diagnostic.itemCount,
+      new Set(seenAnswers.map((a) => a.itemId)),
+    )
     if (selectedItems.length === 0) return reply.status(404).send({ error: 'Keine Diagnostik-Sätze vorhanden' })
 
     const result = await fastify.prisma.diagnosticResult.create({
@@ -163,10 +131,20 @@ const diagnosticRoutes: FastifyPluginAsync = async (fastify) => {
       Math.round(estimateWpmFromDiagnostic(correctCount, avgWordsPerSentence, durationSec)),
       1,
     )
-    const newTargetWpm = Math.max(
+    const diagnosticTargetWpm = Math.max(
       Math.round(estimatedWpm * adaptiveConfig.initialWpmFactor),
       30,
     )
+    // Eingangsdiagnostik setzt das Startziel. Die Zwischendiagnostik misst Satzverifikation,
+    // nicht das Lesen zusammenhängender Texte – sie korrigiert das trainierte Ziel daher nur
+    // gewichtet und begrenzt, statt den Trainingsfortschritt zu überschreiben.
+    const existingProgress = await fastify.prisma.userProgress.findUnique({
+      where: { userId: req.user.userId },
+      select: { fadingTargetWpm: true },
+    })
+    const newTargetWpm = diagnosticResult.diagnostic.type === 'INTERMEDIATE' && existingProgress
+      ? blendDiagnosticTarget(existingProgress.fadingTargetWpm, diagnosticTargetWpm)
+      : diagnosticTargetWpm
 
     await fastify.prisma.$transaction([
       fastify.prisma.diagnosticResult.update({

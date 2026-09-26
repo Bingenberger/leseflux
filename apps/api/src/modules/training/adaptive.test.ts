@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  blendDiagnosticTarget,
   calibrateFromMeasurement,
   readingQuizAccuracy,
   runAdaptiveEngine,
@@ -138,5 +139,20 @@ describe('calibrateFromMeasurement', () => {
 
   it('unterschreitet das Mindesttempo nicht', () => {
     expect(calibrateFromMeasurement(35, [{ measuredWpm: 20, ...understood }], 30)).toBe(30)
+  })
+})
+
+describe('blendDiagnosticTarget', () => {
+  it('verrechnet Diagnose und Trainingsziel je zur Hälfte', () => {
+    expect(blendDiagnosticTarget(80, 90)).toBe(85)
+  })
+
+  it('verwirft den Trainingsfortschritt nicht bei einem schwachen Diagnosetag', () => {
+    // Diagnose 40 WPM → höchstens −15
+    expect(blendDiagnosticTarget(100, 40)).toBe(85)
+  })
+
+  it('begrenzt auch Sprünge nach oben', () => {
+    expect(blendDiagnosticTarget(60, 150)).toBe(75)
   })
 })

@@ -21,15 +21,17 @@ Das Zieltempo (WPM – Wörter pro Minute) wird **automatisch angepasst**:
 - Nach dem ersten Login absolviert das Kind einen kurzen **Eingangstest** (Sätze auf Sinn/Unsinn beurteilen), aus dem das initiale Lesetempo abgeleitet wird.
 - Nach je 5 Trainingseinheiten prüft die adaptive Engine den gleitenden Genauigkeitsdurchschnitt der Verständnisfragen zum Fading-Lesen (Wortblitz und Lückentext fließen nicht ein). Bei ≥ 70 % Genauigkeit steigt das Tempo um 5 WPM; bei < 40 % sinkt es. Die Antwortoptionen werden pro Durchgang gemischt, damit die Position der richtigen Antwort nicht erraten werden kann.
 - Am **Messtag** wird das Fading-Ziel am tatsächlich gemessenen Eigentempo kalibriert (Richtung 105 % des Messwerts, max. ±10 WPM), sofern der Text verstanden wurde und der Messwert plausibel ist.
-- Alle 10 Sitzungen wird ein **Zwischentest** angeboten, der das Tempo direkt neu kalibriert.
+- Alle 10 Sitzungen wird ein **Zwischentest** angeboten. Sein Ergebnis wird mit dem trainierten Tempo verrechnet (je 50 %, max. ±15 WPM), statt den Trainingsfortschritt zu überschreiben. Sätze, die das Kind schon beurteilt hat, werden nur verwendet, wenn keine neuen mehr übrig sind (Parallelformen).
+- Die **Textstufe** richtet sich nach der Klassenstufe (an der Klasse einstellbar, sonst aus dem Klassennamen wie „3a“ abgeleitet). Bei schwachem Textverständnis (< 50 %) gibt es eine Stufe leichter, bei sehr gutem (≥ 90 %) eine schwerer. Das Lesetempo regelt allein das Fading.
 
 ### Übungsformen
 
 | Übung | Beschreibung |
 |---|---|
-| **Fading-Lesen** | Kernübung: Text mit ausblendendem Fading lesen, anschließend Verständnisfragen |
+| **Dreimal lesen** (Standard) | Wiederholtes Lesen desselben Textes: 1. im eigenen Tempo (liefert Messwert), dann Verständnisfragen, dann zwei Fading-Durchgänge mit +10 % und +20 % Tempo |
+| **Fading-Lesen** | Text einmal mit ausblendendem Fading lesen, anschließend Verständnisfragen (Vorlage „Fading klassisch“) |
 | **Wortblitz** | Wörter werden kurz aufgeblitzt; Kind wählt das richtige Wort aus Ablenkern |
-| **Lückentext (Cloze)** | Einzelne Wörter fehlen im Text; Kind wählt aus vorgegebenen Optionen |
+| **Lückentext (Maze)** | An einem *anderen* Text als dem Lesetext fehlt etwa jedes 7. Inhaltswort; Ablenker haben dieselbe Form (Groß-/Kleinschreibung, Endung) und stammen aus anderen Texten |
 | **Freies Lesen** | Text ohne Fading-Zwang; Lesetempo wird gemessen und für Statistiken genutzt |
 
 ### Datenschutz (DSGVO)
@@ -63,7 +65,7 @@ Admin legt Lehrkraft an
 1. QR-Code scannen oder Login-Code eingeben
 2. Falls noch kein Eingangstest: Eingangstest absolvieren (ca. 1 Minute)
 3. Trainingsdauer wählen (10 oder 15 Minuten)
-4. Trainingseinheit: Wortblitz → Fading-Lesen + Quiz → Lückentext
+4. Trainingseinheit: Wortblitz → Dreimal lesen (Eigentempo → Quiz → 2× Fading) → Lückentext
 5. Ergebnis und Sterne sehen; ggf. Zwischentest absolvieren
 6. Pro Tag ist eine Trainingseinheit möglich
 

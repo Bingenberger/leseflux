@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client'
 import argon2 from 'argon2'
 import {
   CreateClassSchema,
+  UpdateClassGradeSchema,
   CreateStudentSchema,
   CreateTeacherSchema,
   ImportTextSchema,
@@ -39,10 +40,10 @@ function wpmFlag(measuredWpm: number | null | undefined) {
   return null
 }
 
-const SYSTEM_TEMPLATE_IDS = new Set(['standard-12-min', 'measurement-day'])
+const SYSTEM_TEMPLATE_IDS = new Set(['standard-12-min', 'fading-classic', 'measurement-day'])
 
 const SessionTemplateBlockSchema = z.object({
-  type: z.enum(['FADING', 'FLASH_WORD', 'CLOZE', 'SELF_PACED']),
+  type: z.enum(['FADING', 'FLASH_WORD', 'CLOZE', 'SELF_PACED', 'REPEATED_READING']),
   targetDurationSec: z.number().int().min(30).max(1800),
 }).passthrough()
 
@@ -53,13 +54,13 @@ const SessionTemplateBodySchema = z.object({
   blocks: z.array(SessionTemplateBlockSchema).min(1).max(8),
 }).superRefine((value, ctx) => {
   const hasReadingBlock = value.blocks.some((block) =>
-    block.type === 'FADING' || block.type === 'SELF_PACED',
+    block.type === 'FADING' || block.type === 'SELF_PACED' || block.type === 'REPEATED_READING',
   )
   if (!hasReadingBlock) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['blocks'],
-      message: 'Mindestens ein FADING- oder SELF_PACED-Block ist erforderlich.',
+      message: 'Mindestens ein Lese-Block (FADING, SELF_PACED oder REPEATED_READING) ist erforderlich.',
     })
   }
 })
@@ -72,13 +73,13 @@ const UpdateSessionTemplateBodySchema = z.object({
 }).superRefine((value, ctx) => {
   if (!value.blocks) return
   const hasReadingBlock = value.blocks.some((block) =>
-    block.type === 'FADING' || block.type === 'SELF_PACED',
+    block.type === 'FADING' || block.type === 'SELF_PACED' || block.type === 'REPEATED_READING',
   )
   if (!hasReadingBlock) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['blocks'],
-      message: 'Mindestens ein FADING- oder SELF_PACED-Block ist erforderlich.',
+      message: 'Mindestens ein Lese-Block (FADING, SELF_PACED oder REPEATED_READING) ist erforderlich.',
     })
   }
 })
@@ -168,8 +169,9 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     const body = CreateClassSchema.safeParse(req.body)
     if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe' })
 
+    const { name, schoolYear, gradeLevel } = body.data
     const cls = await fastify.prisma.class.create({
-      data: { ...body.data, teacherId: req.user.userId },
+      data: { name, schoolYear, gradeLevel: gradeLevel ?? null, teacherId: req.user.userId },
     })
     return reply.status(201).send(cls)
   })
@@ -205,6 +207,23 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       return { ok: true }
     },
   )
+
+  fastify.patch('/classes/:id/grade', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = UpdateClassGradeSchema.safeParse(req.body)
+    if (!body.success) return reply.status(400).send({ error: 'Ungültige Eingabe', issues: body.error.issues })
+
+    const isAdmin = req.user.role === 'ADMIN'
+    const cls = await fastify.prisma.class.findFirst({
+      where: isAdmin ? { id } : { id, teacherId: req.user.userId },
+    })
+    if (!cls) return reply.status(404).send({ error: 'Klasse nicht gefunden' })
+
+    return fastify.prisma.class.update({
+      where: { id },
+      data: { gradeLevel: body.data.gradeLevel },
+    })
+  })
 
   fastify.patch('/classes/:id/template', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -587,7 +606,7 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
     async (req, reply) => {
       const { id, type } = req.params as { id: string; type: string }
       const query = req.query as { from?: string; to?: string }
-      const ExerciseTypeSchema = z.enum(['FADING', 'FLASH_WORD', 'CLOZE', 'SELF_PACED', 'ALL'])
+      const ExerciseTypeSchema = z.enum(['FADING', 'FLASH_WORD', 'CLOZE', 'SELF_PACED', 'REPEATED_READING', 'ALL'])
       const parsedType = ExerciseTypeSchema.safeParse(type.toUpperCase())
       if (!parsedType.success) return reply.status(400).send({ error: 'Ungültiger Übungstyp' })
 

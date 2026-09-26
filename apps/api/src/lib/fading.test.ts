@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { buildFadingSchedule, calculateFadingTiming, splitIntoWords } from '@leseflux/shared'
+import {
+  buildFadingSchedule,
+  calculateFadingTiming,
+  repeatedReadingPassWpm,
+  splitIntoWords,
+} from '@leseflux/shared'
 
 describe('calculateFadingTiming', () => {
   it('total time per word decreases as WPM increases', () => {
@@ -68,5 +73,22 @@ describe('splitIntoWords', () => {
 
   it('trims empty strings', () => {
     expect(splitIntoWords('  ')).toHaveLength(0)
+  })
+})
+
+describe('repeatedReadingPassWpm', () => {
+  const cfg = { passFactors: [1.1, 1.2], baseMinFactor: 0.8, baseMaxFactor: 1.2 }
+
+  it('steigert vom Kaltlesetempo aus um 10 % und 20 %', () => {
+    expect(repeatedReadingPassWpm(80, 75, cfg)).toEqual([83, 90])
+  })
+
+  it('nutzt das Fading-Ziel, wenn keine Messung vorliegt', () => {
+    expect(repeatedReadingPassWpm(80, null, cfg)).toEqual([88, 96])
+  })
+
+  it('begrenzt unplausible Kaltlesewerte auf das Band um das Ziel', () => {
+    expect(repeatedReadingPassWpm(80, 900, cfg)).toEqual([106, 115])
+    expect(repeatedReadingPassWpm(80, 10, cfg)).toEqual([70, 77])
   })
 })

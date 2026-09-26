@@ -18,6 +18,7 @@ const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FADING: 'Lesen mit Fading',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Lesen im eigenen Tempo',
+  REPEATED_READING: 'Dreimal lesen',
 }
 
 const EXERCISE_ICON: Record<ExerciseType, string> = {
@@ -25,6 +26,7 @@ const EXERCISE_ICON: Record<ExerciseType, string> = {
   FADING: '📖',
   CLOZE: '🧩',
   SELF_PACED: '⏱',
+  REPEATED_READING: '🔁',
 }
 
 function minutesLabel(seconds: number) {

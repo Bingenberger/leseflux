@@ -1,13 +1,25 @@
 import { randomUUID } from 'crypto'
 import type { ExerciseType, FlashWord, PrismaClient } from '@prisma/client'
 import { calculateFadingTiming } from '@leseflux/shared'
+import { adaptiveConfig } from '../config.js'
 import { selectNextText } from '../modules/training/textSelector.js'
-import { formatManualCloze, generateAutoCloze } from './cloze.js'
+import { chooseTextLevel } from '../modules/training/textLevel.js'
+import { formatManualCloze, generateAutoCloze, mazePoolFromTexts } from './cloze.js'
 import { shuffleQuestionOptions } from './quizOptions.js'
 
 const DEFAULT_TEMPLATE_ID = 'standard-12-min'
+const CLASSIC_FADING_TEMPLATE_ID = 'fading-classic'
 const MEASUREMENT_TEMPLATE_ID = 'measurement-day'
 const FLASH_WORD_COUNT = 12
+/** Anzahl Texte derselben Stufe, aus denen Maze-Ablenker gezogen werden */
+const MAZE_POOL_TEXTS = 40
+
+/** Übungstypen, die einen Lesetext mit Verständnisfragen haben */
+const READING_TYPES: ExerciseType[] = ['FADING', 'SELF_PACED', 'REPEATED_READING']
+
+export function isReadingType(type: ExerciseType) {
+  return READING_TYPES.includes(type)
+}
 
 type SessionBlock = {
   type: ExerciseType
@@ -16,54 +28,51 @@ type SessionBlock = {
 
 type TextWithQuestions = NonNullable<Awaited<ReturnType<typeof selectNextText>>>
 
+/** System-Vorlagen (ohne Lehrkraft). Standard ist das wiederholte Lesen im Dreischritt;
+ *  das klassische einmalige Fading-Lesen bleibt als Vorlage wählbar. */
+const SYSTEM_TEMPLATES = [
+  {
+    id: DEFAULT_TEMPLATE_ID,
+    name: 'Standard 12 Min',
+    isDefault: true,
+    blocks: [
+      { type: 'FLASH_WORD', targetDurationSec: 120 },
+      { type: 'REPEATED_READING', targetDurationSec: 600 },
+      { type: 'CLOZE', targetDurationSec: 180 },
+    ],
+  },
+  {
+    id: CLASSIC_FADING_TEMPLATE_ID,
+    name: 'Fading klassisch 12 Min',
+    isDefault: false,
+    blocks: [
+      { type: 'FLASH_WORD', targetDurationSec: 120 },
+      { type: 'FADING', targetDurationSec: 600 },
+      { type: 'CLOZE', targetDurationSec: 180 },
+    ],
+  },
+  {
+    id: MEASUREMENT_TEMPLATE_ID,
+    name: 'Messtag',
+    isDefault: false,
+    blocks: [
+      { type: 'FLASH_WORD', targetDurationSec: 120 },
+      { type: 'SELF_PACED', targetDurationSec: 600 },
+      { type: 'CLOZE', targetDurationSec: 180 },
+    ],
+  },
+] as const
+
 export async function ensureDefaultSessionTemplate(prisma: PrismaClient) {
-  const standard = await prisma.sessionTemplate.upsert({
-    where: { id: DEFAULT_TEMPLATE_ID },
-    update: {
-      name: 'Standard 12 Min',
-      isDefault: true,
-      blocks: [
-        { type: 'FLASH_WORD', targetDurationSec: 120 },
-        { type: 'FADING', targetDurationSec: 600 },
-        { type: 'CLOZE', targetDurationSec: 180 },
-      ],
-    },
-    create: {
-      id: DEFAULT_TEMPLATE_ID,
-      name: 'Standard 12 Min',
-      isDefault: true,
-      blocks: [
-        { type: 'FLASH_WORD', targetDurationSec: 120 },
-        { type: 'FADING', targetDurationSec: 600 },
-        { type: 'CLOZE', targetDurationSec: 180 },
-      ],
-    },
-  })
-
-  await prisma.sessionTemplate.upsert({
-    where: { id: MEASUREMENT_TEMPLATE_ID },
-    update: {
-      name: 'Messtag',
-      isDefault: false,
-      blocks: [
-        { type: 'FLASH_WORD', targetDurationSec: 120 },
-        { type: 'SELF_PACED', targetDurationSec: 600 },
-        { type: 'CLOZE', targetDurationSec: 180 },
-      ],
-    },
-    create: {
-      id: MEASUREMENT_TEMPLATE_ID,
-      name: 'Messtag',
-      isDefault: false,
-      blocks: [
-        { type: 'FLASH_WORD', targetDurationSec: 120 },
-        { type: 'SELF_PACED', targetDurationSec: 600 },
-        { type: 'CLOZE', targetDurationSec: 180 },
-      ],
-    },
-  })
-
-  return standard
+  for (const { id, name, isDefault, blocks } of SYSTEM_TEMPLATES) {
+    const data = { name, isDefault, blocks: blocks.map((block) => ({ ...block })) }
+    await prisma.sessionTemplate.upsert({
+      where: { id },
+      update: data,
+      create: { id, ...data },
+    })
+  }
+  return prisma.sessionTemplate.findUniqueOrThrow({ where: { id: DEFAULT_TEMPLATE_ID } })
 }
 
 export async function selectSessionTemplate(prisma: PrismaClient, userId: string, totalSessions: number) {
@@ -127,17 +136,56 @@ function formatFlashWord(word: FlashWord) {
   }
 }
 
-async function getClozeExercise(prisma: PrismaClient, textId: string) {
+/** Textstufe für ein Kind: Klassenstufe (bzw. Klassenname) + Textverständnis, siehe chooseTextLevel. */
+export async function resolveTextLevel(
+  prisma: PrismaClient,
+  userId: string,
+  progress: { fadingTargetWpm: number; averageQuizAccuracy: number | null },
+) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { class: { select: { gradeLevel: true, name: true } } },
+  })
+  return chooseTextLevel({
+    gradeLevel: user?.class?.gradeLevel ?? null,
+    className: user?.class?.name ?? null,
+    averageQuizAccuracy: progress.averageQuizAccuracy,
+    targetWpm: progress.fadingTargetWpm,
+  })
+}
+
+/** Lückentext als Maze-Aufgabe an einem ANDEREN Text als dem Lesetext – sonst prüft er das
+ *  Gedächtnis statt das Leseverstehen. Ablenker stammen aus weiteren Texten derselben Stufe. */
+async function getClozeExercise(
+  prisma: PrismaClient,
+  userId: string,
+  level: number,
+  readingTextId: string,
+) {
+  const selected = await selectNextText(prisma, userId, level, [readingTextId])
+  if (!selected) return null
   const text = await prisma.text.findUnique({
-    where: { id: textId },
+    where: { id: selected.id },
     include: { clozeTemplate: { include: { gaps: { orderBy: { wordIndex: 'asc' } } } } },
   })
   if (!text) return null
 
   const template = text.clozeTemplate
-  const cloze = template && template.strategy === 'MANUAL'
-    ? formatManualCloze(text, template.gaps)
-    : generateAutoCloze(text, template?.gapInterval ?? undefined)
+  let cloze
+  if (template && template.strategy === 'MANUAL') {
+    cloze = formatManualCloze(text, template.gaps)
+  } else {
+    const poolTexts = await prisma.text.findMany({
+      where: { targetLevel: text.targetLevel, id: { notIn: [text.id, readingTextId] } },
+      select: { content: true },
+      take: MAZE_POOL_TEXTS,
+    })
+    cloze = generateAutoCloze(
+      text,
+      template?.gapInterval ?? undefined,
+      mazePoolFromTexts(poolTexts.map((t) => t.content)),
+    )
+  }
 
   if (cloze.gaps.length === 0) return null
   return {
@@ -178,6 +226,47 @@ function getBlockDuration(blocks: SessionBlock[], orderIndex: number, fallbackSe
   return blocks[orderIndex]?.targetDurationSec ?? fallbackSec
 }
 
+/** Antwort-Payload für eine Lese-Übung (Fading, Eigentempo oder wiederholtes Lesen). */
+function formatReadingExercise(
+  run: { id: string; exerciseType: ExerciseType },
+  text: TextWithQuestions,
+  targetWpm: number,
+  targetDurationSec: number,
+) {
+  const base = {
+    runId: run.id,
+    targetDurationSec,
+    text: formatText(text),
+    questions: formatQuestions(text, run.id),
+  }
+  if (run.exerciseType === 'SELF_PACED') {
+    return { ...base, type: 'SELF_PACED' as const }
+  }
+  if (run.exerciseType === 'REPEATED_READING') {
+    return {
+      ...base,
+      type: 'REPEATED_READING' as const,
+      fadingTargetWpm: targetWpm,
+      passConfig: {
+        passFactors: [...adaptiveConfig.repeatedReading.passFactors],
+        baseMinFactor: adaptiveConfig.repeatedReading.baseMinFactor,
+        baseMaxFactor: adaptiveConfig.repeatedReading.baseMaxFactor,
+      },
+    }
+  }
+  const { displayMs: fadingMsBase, fadeOutMs: fadingMsPerChar } = calculateFadingTiming(
+    targetWpm,
+    'Beispiel',
+  )
+  return {
+    ...base,
+    type: 'FADING' as const,
+    fadingTargetWpm: targetWpm,
+    fadingMsBase,
+    fadingMsPerChar,
+  }
+}
+
 export async function createNextReadingExercise(
   prisma: PrismaClient,
   userId: string,
@@ -192,7 +281,7 @@ export async function createNextReadingExercise(
   if (!previousRun || previousRun.session.userId !== userId) return null
   if (previousRun.finishedAt === null) return null
   if (previousRun.session.completed) return null
-  if (previousRun.exerciseType !== 'FADING' && previousRun.exerciseType !== 'SELF_PACED') return null
+  if (!isReadingType(previousRun.exerciseType)) return null
 
   let progress = await prisma.userProgress.findUnique({ where: { userId } })
   if (!progress) {
@@ -201,10 +290,9 @@ export async function createNextReadingExercise(
     })
   }
 
-  const targetWpm = previousRun.exerciseType === 'FADING'
-    ? progress.fadingTargetWpm
-    : previousRun.targetWpm ?? progress.fadingTargetWpm
-  const text = await selectNextText(prisma, userId, targetWpm)
+  const targetWpm = progress.fadingTargetWpm
+  const level = await resolveTextLevel(prisma, userId, progress)
+  const text = await selectNextText(prisma, userId, level)
   if (!text) return null
 
   const runCount = await prisma.exerciseRun.count({ where: { sessionId: previousRun.sessionId } })
@@ -216,7 +304,7 @@ export async function createNextReadingExercise(
       orderIndex: runCount,
       startedAt: new Date(),
       textId: text.id,
-      targetWpm: previousRun.exerciseType === 'FADING' ? targetWpm : null,
+      targetWpm: previousRun.exerciseType === 'SELF_PACED' ? null : targetWpm,
       responses: [],
     },
   })
@@ -226,30 +314,7 @@ export async function createNextReadingExercise(
     : []
   const targetDurationSec = getBlockDuration(templateBlocks, previousRun.orderIndex, fallbackDurationSec)
 
-  if (run.exerciseType === 'SELF_PACED') {
-    return {
-      runId: run.id,
-      type: 'SELF_PACED' as const,
-      targetDurationSec,
-      text: formatText(text),
-      questions: formatQuestions(text, run.id),
-    }
-  }
-
-  const { displayMs: fadingMsBase, fadeOutMs: fadingMsPerChar } = calculateFadingTiming(
-    targetWpm,
-    'Beispiel',
-  )
-  return {
-    runId: run.id,
-    type: 'FADING' as const,
-    targetDurationSec,
-    fadingTargetWpm: targetWpm,
-    fadingMsBase,
-    fadingMsPerChar,
-    text: formatText(text),
-    questions: formatQuestions(text, run.id),
-  }
+  return formatReadingExercise(run, text, targetWpm, targetDurationSec)
 }
 
 export async function buildTrainingSession(
@@ -270,17 +335,20 @@ export async function buildTrainingSession(
     ? (template.blocks as SessionBlock[])
     : []
   const flashWords = await selectFlashWords(prisma, progress.flashWordLevel)
-  const text = await selectNextText(prisma, userId, progress.fadingTargetWpm)
+  const level = await resolveTextLevel(prisma, userId, progress)
+  const text = await selectNextText(prisma, userId, level)
   if (!text) return null
-  const clozeExercise = await getClozeExercise(prisma, text.id)
+  const clozeExercise = templateBlocks.some((block) => block.type === 'CLOZE')
+    ? await getClozeExercise(prisma, userId, level, text.id)
+    : null
 
   const unitId = trainingUnitId ?? randomUUID()
   const blocks = templateBlocks.filter((block) =>
     block.type === 'FLASH_WORD'
       ? flashWords.length > 0
-        : block.type === 'CLOZE'
+      : block.type === 'CLOZE'
         ? clozeExercise !== null
-        : block.type === 'FADING' || block.type === 'SELF_PACED',
+        : isReadingType(block.type),
   )
   if (blocks.length === 0) blocks.push({ type: 'FADING', targetDurationSec: durationMinutes * 60 })
 
@@ -295,10 +363,12 @@ export async function buildTrainingSession(
           exerciseType: block.type,
           orderIndex,
           startedAt: new Date(),
-          textId: block.type === 'FADING' || block.type === 'SELF_PACED' || block.type === 'CLOZE'
-            ? text.id
+          textId: block.type === 'CLOZE'
+            ? clozeExercise?.text.id ?? null
+            : isReadingType(block.type) ? text.id : null,
+          targetWpm: block.type === 'FADING' || block.type === 'REPEATED_READING'
+            ? progress.fadingTargetWpm
             : null,
-          targetWpm: block.type === 'FADING' ? progress.fadingTargetWpm : null,
           flashDurationMs: block.type === 'FLASH_WORD' ? progress.flashWordDurationMs : null,
           flashDifficulty: block.type === 'FLASH_WORD' ? progress.flashWordLevel : null,
           itemsTotal: block.type === 'FLASH_WORD'
@@ -312,11 +382,6 @@ export async function buildTrainingSession(
     },
     include: { exerciseRuns: true },
   })
-
-  const { displayMs: fadingMsBase, fadeOutMs: fadingMsPerChar } = calculateFadingTiming(
-    progress.fadingTargetWpm,
-    'Beispiel',
-  )
 
   return {
     sessionId: session.id,
@@ -346,25 +411,7 @@ export async function buildTrainingSession(
             gaps: clozeExercise.gaps,
           }
         }
-        if (run.exerciseType === 'SELF_PACED') {
-          return {
-            runId: run.id,
-            type: 'SELF_PACED' as const,
-            targetDurationSec: block.targetDurationSec,
-            text: formatText(text),
-            questions: formatQuestions(text, run.id),
-          }
-        }
-        return {
-          runId: run.id,
-          type: 'FADING' as const,
-          targetDurationSec: block.targetDurationSec,
-          fadingTargetWpm: progress.fadingTargetWpm,
-          fadingMsBase,
-          fadingMsPerChar,
-          text: formatText(text),
-          questions: formatQuestions(text, run.id),
-        }
+        return formatReadingExercise(run, text, progress.fadingTargetWpm, block.targetDurationSec)
       }),
   }
 }

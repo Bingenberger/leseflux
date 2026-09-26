@@ -116,6 +116,15 @@ export function calibrateFromMeasurement(
   return Math.max(Math.round(currentTargetWpm + change), minWpm)
 }
 
+/** Verrechnet das Ergebnis einer Zwischendiagnostik mit dem trainierten Fading-Ziel:
+ *  gewichtet und pro Diagnostik auf ±maxChangeWpm begrenzt. */
+export function blendDiagnosticTarget(currentTargetWpm: number, diagnosticTargetWpm: number): number {
+  const cfg = adaptiveConfig.intermediateDiagnostic
+  const proposed = (1 - cfg.weight) * currentTargetWpm + cfg.weight * diagnosticTargetWpm
+  const change = Math.max(-cfg.maxChangeWpm, Math.min(cfg.maxChangeWpm, proposed - currentTargetWpm))
+  return Math.max(Math.round(currentTargetWpm + change), 30)
+}
+
 export function runFlashAdaptiveEngine(
   progress: FlashProgressSnapshot,
   accuracy: number,

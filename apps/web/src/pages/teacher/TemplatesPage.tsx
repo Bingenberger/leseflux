@@ -12,13 +12,14 @@ import {
 } from '../../lib/api.ts'
 import type { ExerciseType, SaveSessionTemplateInput, SessionTemplateSummary } from '../../lib/api.ts'
 
-const SYSTEM_TEMPLATE_IDS = new Set(['standard-12-min', 'measurement-day'])
+const SYSTEM_TEMPLATE_IDS = new Set(['standard-12-min', 'fading-classic', 'measurement-day'])
 
 const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FLASH_WORD: 'Wortblitz',
   FADING: 'Fading',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Eigentempo',
+  REPEATED_READING: 'Wiederholtes Lesen (Dreischritt)',
 }
 
 const EMPTY_TEMPLATE: SaveSessionTemplateInput = {
@@ -120,8 +121,10 @@ export default function TemplatesPage() {
       setError('Name fehlt.')
       return
     }
-    if (!form.blocks.some((block) => block.type === 'FADING' || block.type === 'SELF_PACED')) {
-      setError('Mindestens ein Fading- oder Eigentempo-Block ist erforderlich.')
+    if (!form.blocks.some((block) =>
+      block.type === 'FADING' || block.type === 'SELF_PACED' || block.type === 'REPEATED_READING',
+    )) {
+      setError('Mindestens ein Lese-Block (Fading, Eigentempo oder Wiederholtes Lesen) ist erforderlich.')
       return
     }
     saveMutation.mutate(form)

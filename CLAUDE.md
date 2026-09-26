@@ -76,6 +76,18 @@ Runs server-side after every `POST /api/training/finish`. Adjusts `UserProgress.
 | Intermediate diagnostic trigger | every 10 sessions |
 | Initial fading WPM | 90 % of diagnostic-estimated WPM |
 
+### Repeated Reading (`REPEATED_READING`, default template)
+Same text three times: cold read at own pace (measured WPM) → comprehension quiz → two fading passes at `repeatedReadingPassWpm()` (shared; base = cold-read WPM clamped to 0.8–1.2 × target, factors 1.1/1.2 from `adaptiveConfig.repeatedReading`). Sessions without a FADING quiz calibrate the target from cold reads (`calibrateFromMeasurement`).
+
+### Text Level (`apps/api/src/modules/training/textLevel.ts`)
+Text level = class grade (`Class.gradeLevel`, else parsed from class name), −1 if comprehension < 0.5, +1 if ≥ 0.9, clamped 2–4. WPM is only a fallback when no grade is known.
+
+### Cloze (Maze, `apps/api/src/services/cloze.ts`)
+Uses a different text than the reading text. Gaps ≈ every 7th content word after the first sentence (no function words, no sentence starts, no attributive adjectives); distractors match capitalisation/ending and come from other texts of the same level.
+
+### Intermediate Diagnostic
+Blends with the trained target (`blendDiagnosticTarget`, weight 0.5, max ±15 WPM); item selection prefers sentences the child has not seen (`diagnostic/itemSelection.ts`).
+
 ### LIX Calculation
 `LIX = (W/S) + (L × 100) / W` — W = word count, S = sentence count, L = words > 6 chars. Computed on text import; stored as `Text.lixScore`.
 

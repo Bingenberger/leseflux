@@ -39,12 +39,13 @@ const TAB_LABEL: Record<Tab, string> = {
   flags: 'Auffälligkeiten',
 }
 
-const EXERCISE_TYPES: ExerciseType[] = ['FLASH_WORD', 'FADING', 'CLOZE', 'SELF_PACED']
+const EXERCISE_TYPES: ExerciseType[] = ['FLASH_WORD', 'REPEATED_READING', 'FADING', 'CLOZE', 'SELF_PACED']
 const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FLASH_WORD: 'Wortblitz',
   FADING: 'Fading',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Eigentempo',
+  REPEATED_READING: 'Wiederholtes Lesen',
 }
 
 function DiagnosticCard({ result }: { result: DiagnosticResultDetail }) {

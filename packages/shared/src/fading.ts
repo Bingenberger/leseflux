@@ -47,6 +47,29 @@ export function buildFadingSchedule(targetWpm: number, words: string[]): FadingS
   return { fadeStartMs, fadeMs, totalMs: Math.round(slotStart) }
 }
 
+export interface RepeatedReadingConfig {
+  /** Tempo der Fading-Durchgänge relativ zur Basis, z. B. [1.1, 1.2] */
+  passFactors: number[]
+  /** Band um das Fading-Ziel, in dem das Kaltlesetempo als Basis zählt */
+  baseMinFactor: number
+  baseMaxFactor: number
+}
+
+/** Tempi der Fading-Durchgänge beim wiederholten Lesen desselben Textes.
+ *  Basis ist das gemessene Kaltlesetempo des ersten Durchgangs, begrenzt auf ein Band um das
+ *  Fading-Ziel (schützt vor „Fertig“-Tippen ohne Lesen und vor Ausreißern); ohne Messung
+ *  das Fading-Ziel selbst. */
+export function repeatedReadingPassWpm(
+  targetWpm: number,
+  coldReadWpm: number | null,
+  config: RepeatedReadingConfig,
+): number[] {
+  const base = coldReadWpm !== null && Number.isFinite(coldReadWpm) && coldReadWpm > 0
+    ? Math.min(targetWpm * config.baseMaxFactor, Math.max(targetWpm * config.baseMinFactor, coldReadWpm))
+    : targetWpm
+  return config.passFactors.map((factor) => Math.round(base * factor))
+}
+
 /** Teilt einen Text in Wörter auf (bereinigt Satzzeichen, behält Wortform für Anzeige). */
 export function splitIntoWords(text: string): string[] {
   return text
