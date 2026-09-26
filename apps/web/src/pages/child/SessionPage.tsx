@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { starsForRound } from '@leseflux/shared'
 import { ChildLayout } from '../../components/shared/Layout.tsx'
 import { FadingReader } from '../../components/reader/FadingReader.tsx'
 import { QuizView } from '../../components/reader/QuizView.tsx'
@@ -165,7 +166,7 @@ export default function SessionPage() {
       let round: Round = {
         textTitle: current.text.title,
         accuracy: 0,
-        starsEarned: 1,
+        starsEarned: starsForRound(0),
       }
       try {
         const runDurationMs = Date.now() - runStartMsRef.current
@@ -192,7 +193,7 @@ export default function SessionPage() {
             round = {
               textTitle: current.text.title,
               accuracy: exerciseResult.accuracy,
-              starsEarned: exerciseResult.accuracy >= 0.7 ? 3 : exerciseResult.accuracy >= 0.4 ? 2 : 1,
+              starsEarned: starsForRound(exerciseResult.accuracy),
             }
             setLastRound(round)
             setCompletedRounds((prev) => [...prev, round])
@@ -215,7 +216,7 @@ export default function SessionPage() {
         round = {
           textTitle: current.text.title,
           accuracy: data?.accuracy ?? exerciseResult.accuracy,
-          starsEarned: data?.starsEarned ?? 1,
+          starsEarned: data?.starsEarned ?? starsForRound(exerciseResult.accuracy),
           offerIntermediateDiagnostic: data?.offerIntermediateDiagnostic,
           newTargetWpm: data?.newTargetWpm,
           streakDays: data?.streakDays,
@@ -268,13 +269,13 @@ export default function SessionPage() {
       const current = sessionData.exercises[currentIndex]
       if (!current || current.type !== 'FLASH_WORD') return
 
-      let round: Round = { textTitle: 'Wortblitz', accuracy: 0, starsEarned: 1 }
+      let round: Round = { textTitle: 'Wortblitz', accuracy: 0, starsEarned: starsForRound(0) }
       try {
         const { data } = await finishExercise(current.runId, { responses, durationMs })
         round = {
           textTitle: 'Wortblitz',
           accuracy: data.accuracy,
-          starsEarned: data.accuracy >= 0.85 ? 3 : data.accuracy >= 0.5 ? 2 : 1,
+          starsEarned: starsForRound(data.accuracy, true, 0.85),
         }
       } catch {
         // Ergebnis mit Defaults verwenden
@@ -306,13 +307,13 @@ export default function SessionPage() {
       const current = sessionData.exercises[currentIndex]
       if (!current || current.type !== 'CLOZE') return
 
-      let round: Round = { textTitle: 'Lückentext', accuracy: 0, starsEarned: 1 }
+      let round: Round = { textTitle: 'Lückentext', accuracy: 0, starsEarned: starsForRound(0) }
       try {
         const { data } = await finishExercise(current.runId, { responses, durationMs })
         round = {
           textTitle: 'Lückentext',
           accuracy: data.accuracy,
-          starsEarned: data.accuracy >= 0.7 ? 3 : data.accuracy >= 0.4 ? 2 : 1,
+          starsEarned: starsForRound(data.accuracy),
         }
       } catch {
         // Ergebnis mit Defaults verwenden
@@ -425,7 +426,7 @@ export default function SessionPage() {
           </div>
           <h2 className="text-2xl font-bold text-primary text-center">Toll gemacht!</h2>
           <p className="text-gray-600 text-center">
-            {pct} % richtig — noch ca. {remainingMin} {remainingMin === 1 ? 'Minute' : 'Minuten'} übrig
+            {pct >= 70 ? `${pct} % richtig` : 'Abschnitt geschafft'} — noch ca. {remainingMin} {remainingMin === 1 ? 'Minute' : 'Minuten'} übrig
           </p>
           <Button size="lg" onClick={handleContinue} className="w-full">
             Weiter zum nächsten Abschnitt →
@@ -470,7 +471,7 @@ export default function SessionPage() {
               <span className="text-gray-500 text-sm">Ø Genauigkeit</span>
               <span className={[
                 'font-bold',
-                avgAccuracy >= 70 ? 'text-success' : avgAccuracy < 40 ? 'text-warning' : 'text-gray-700',
+                avgAccuracy >= 70 ? 'text-success' : 'text-gray-700',
               ].join(' ')}>{avgAccuracy} %</span>
             </div>
           </div>
@@ -607,6 +608,7 @@ export default function SessionPage() {
         {phase === 'quiz' && (current.type === 'FADING' || current.type === 'SELF_PACED') && (
           <QuizView
             questions={current.questions}
+            text={current.text.content}
             onComplete={handleQuizComplete}
           />
         )}

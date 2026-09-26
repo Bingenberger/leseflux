@@ -11,12 +11,36 @@ import {
   getStudentDetail,
   getStudentDiagnostics,
   getStudentExercises,
+  getStudentInsights,
   getStudentSessions,
   regenerateStudentCode,
   setStudentQrToken,
   updateStudentTemplate,
 } from '../../lib/api.ts'
 import type { DiagnosticResultDetail, ExerciseType } from '../../lib/api.ts'
+import type { InsightFlagCode } from '@leseflux/shared'
+
+const AREAS = [
+  { key: 'comprehension', label: 'Textverständnis' },
+  { key: 'flashWord', label: 'Wortblitz' },
+  { key: 'cloze', label: 'Lückentext' },
+] as const
+
+const QUESTION_KINDS = [
+  { key: 'WOERTLICH', label: 'Wörtlich (steht im Text)' },
+  { key: 'SCHLUSSFOLGERND', label: 'Schlussfolgernd' },
+  { key: 'BEWERTEND', label: 'Bewertend' },
+] as const
+
+const FLAG_LABEL: Record<InsightFlagCode, string> = {
+  GUESSING: 'Raten?',
+  LOW_COMPREHENSION: 'Verständnis',
+  IMPLAUSIBLE_PACE: 'Messung',
+}
+
+function formatPct(value: number | null) {
+  return value === null ? '–' : `${Math.round(value * 100)} %`
+}
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -175,6 +199,12 @@ export default function StudentDetailPage() {
     enabled: !!id,
   })
 
+  const { data: insights } = useQuery({
+    queryKey: ['student-insights', id],
+    queryFn: () => getStudentInsights(id!).then((r) => r.data),
+    enabled: !!id,
+  })
+
   const { data: templates } = useQuery({
     queryKey: ['session-templates'],
     queryFn: () => getSessionTemplates().then((r) => r.data),
@@ -279,6 +309,9 @@ export default function StudentDetailPage() {
               >
                 <PhosphorIcon name="listChecks" size={15} />
                 {TAB_LABEL[tab]}
+                {tab === 'flags' && insights && insights.flags.length > 0 && (
+                  <span className="ml-1 rounded-full bg-warning text-white text-xs px-1.5">{insights.flags.length}</span>
+                )}
               </button>
             ))}
           </div>
@@ -396,10 +429,56 @@ export default function StudentDetailPage() {
           )}
 
           {/* Charts */}
+          {activeTab === 'overview' && insights && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5 grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Genauigkeit nach Bereich</h3>
+                <p className="text-xs text-gray-400 mb-3">Jeweils die letzten bis zu 10 Durchläufe</p>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {AREAS.map(({ key, label }) => {
+                      const area = insights.accuracyByArea[key]
+                      return (
+                        <tr key={key} className="border-t border-gray-100">
+                          <td className="py-1.5 text-gray-700">{label}</td>
+                          <td className="py-1.5 text-right font-semibold text-gray-900">{formatPct(area.accuracy)}</td>
+                          <td className="py-1.5 text-right text-xs text-gray-400 w-24">{area.runs} Läufe</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Verstehen nach Fragetyp</h3>
+                <p className="text-xs text-gray-400 mb-3">Automatisch zugeordnet nach dem Fragebeginn (IGLU-Ebenen)</p>
+                <table className="w-full text-sm">
+                  <tbody>
+                    {QUESTION_KINDS.map(({ key, label }) => {
+                      const kind = insights.accuracyByQuestionKind[key]
+                      return (
+                        <tr key={key} className="border-t border-gray-100">
+                          <td className="py-1.5 text-gray-700">{label}</td>
+                          <td className="py-1.5 text-right font-semibold text-gray-900">
+                            {formatPct(kind.total > 0 ? kind.correct / kind.total : null)}
+                          </td>
+                          <td className="py-1.5 text-right text-xs text-gray-400 w-24">{kind.total} Fragen</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'overview' && sessions && sessions.length > 0 && (
             <>
               <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">WPM-Verlauf</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">WPM-Verlauf</h3>
+                <p className="text-xs text-gray-400 mb-4">
+                  Durchgezogen = gemessenes Eigentempo (Messtag, erstes Lesen beim Dreimal-Lesen) · gestrichelt = Fading-Zieltempo
+                </p>
                 <WpmChart sessions={sessions} />
               </div>
 
@@ -512,6 +591,17 @@ export default function StudentDetailPage() {
           {activeTab === 'flags' && (
             <div className="bg-white rounded-xl border border-gray-200 p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Auffälligkeiten</h3>
+              {insights && insights.flags.length > 0 && (
+                <ul className="flex flex-col gap-2 mb-5">
+                  {insights.flags.map((flag) => (
+                    <li key={flag.code} className="rounded-lg border border-warning/40 bg-orange-50 px-4 py-3 text-sm text-gray-800">
+                      <span className="font-semibold text-warning mr-2">{FLAG_LABEL[flag.code]}</span>
+                      {flag.message}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Unrealistische Tempo-Messungen</h4>
               {exercises?.some((r) => r.wpmFlag === 'UNREALISTIC') ? (
                 <div className="flex flex-col divide-y divide-gray-100">
                   {exercises.filter((r) => r.wpmFlag === 'UNREALISTIC').map((r) => (

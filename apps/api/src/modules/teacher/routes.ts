@@ -12,6 +12,7 @@ import {
 import { z } from 'zod'
 import { generateQrToken, hashQrToken, generateLoginCode } from '../../lib/qr.js'
 import { writeAuditLog } from '../../lib/audit.js'
+import { computeStudentInsights, isPlausibleWpm } from './insights.js'
 
 function primaryFadingRun(session: {
   exerciseRuns: {
@@ -36,8 +37,7 @@ function runAccuracy(run: { itemsTotal: number; itemsCorrect: number } | null) {
 
 function wpmFlag(measuredWpm: number | null | undefined) {
   if (measuredWpm === null || measuredWpm === undefined) return null
-  if (measuredWpm < 20 || measuredWpm > 220) return 'UNREALISTIC'
-  return null
+  return isPlausibleWpm(measuredWpm) ? null : 'UNREALISTIC'
 }
 
 const SYSTEM_TEMPLATE_IDS = new Set(['standard-12-min', 'fading-classic', 'measurement-day'])
@@ -461,6 +461,37 @@ const teacherRoutes: FastifyPluginAsync = async (fastify) => {
       starCount: student.progress?.starCount ?? 0,
       streakDays: student.progress?.streakDays ?? 0,
     }
+  })
+
+  fastify.get('/students/:id/insights', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const isAdmin = req.user.role === 'ADMIN'
+    const student = await fastify.prisma.user.findFirst({
+      where: isAdmin ? { id, role: 'CHILD' } : { id, role: 'CHILD', class: { teacherId: req.user.userId } },
+      select: { id: true },
+    })
+    if (!student) return reply.status(404).send({ error: 'Schüler nicht gefunden' })
+
+    const runs = await fastify.prisma.exerciseRun.findMany({
+      where: { session: { userId: id }, finishedAt: { not: null } },
+      orderBy: { startedAt: 'desc' },
+      take: 120,
+      select: {
+        exerciseType: true, startedAt: true, itemsTotal: true, itemsCorrect: true,
+        measuredWpm: true, responses: true,
+      },
+    })
+    const questionIds = runs.flatMap((r) =>
+      Array.isArray(r.responses)
+        ? r.responses.flatMap((x) =>
+          x && typeof x === 'object' && 'questionId' in x && typeof x.questionId === 'string' ? [x.questionId] : [])
+        : [],
+    )
+    const questions = await fastify.prisma.textQuestion.findMany({
+      where: { id: { in: [...new Set(questionIds)] } },
+      select: { id: true, question: true },
+    })
+    return computeStudentInsights(runs, new Map(questions.map((q) => [q.id, q.question])))
   })
 
   fastify.patch('/students/:id/template', { preHandler: fastify.authenticateTeacher }, async (req, reply) => {

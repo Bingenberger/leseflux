@@ -54,6 +54,20 @@ export const adaptiveConfig = {
     minLevel: 2,
     maxLevel: 4,
   },
+  /** Hinweise für Lehrkräfte (Reiter „Auffälligkeiten“) */
+  teacherInsights: {
+    /** Anzahl der jüngsten Läufe je Bereich für die Genauigkeitsübersicht */
+    recentRuns: 10,
+    /** Rate-Muster: Median der Antwortzeit darunter UND Verständnis darunter */
+    guessingMedianMs: 2500,
+    guessingMaxAccuracy: 0.5,
+    guessingMinAnswers: 6,
+    /** Dauerhaft schwaches Verständnis: Mittel der letzten Leseläufe darunter */
+    lowComprehensionBelow: 0.4,
+    lowComprehensionRuns: 5,
+    /** Unplausible Eigentempo-Messungen: so viele unter den letzten fünf */
+    implausiblePaceCount: 2,
+  },
   diagnostic: { intervalSessions: 10 },
   /** Initiales Fading-Tempo = Faktor × diagnostisch ermittelte WPM */
   initialWpmFactor: 0.9,

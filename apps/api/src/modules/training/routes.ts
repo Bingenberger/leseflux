@@ -4,6 +4,7 @@ import {
   FinishSessionSchema,
   FinishExerciseSchema,
   levelFromWpm,
+  starsForRound,
 } from '@leseflux/shared'
 import {
   calibrateFromMeasurement,
@@ -344,7 +345,8 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     const totalQuestions = scoredRuns.reduce((sum, r) => sum + r.itemsTotal, 0)
     const correctCount = scoredRuns.reduce((sum, r) => sum + r.itemsCorrect, 0)
     const accuracy = totalQuestions > 0 ? correctCount / totalQuestions : 0
-    const starsEarned = accuracy >= 0.7 ? 3 : accuracy >= 0.4 ? 2 : 1
+    // Wer die Sitzung schafft, bekommt mindestens 2 Sterne; der dritte für gutes Verstehen
+    const starsEarned = starsForRound(accuracy)
 
     await fastify.prisma.trainingSession.update({
       where: { id: sessionId },

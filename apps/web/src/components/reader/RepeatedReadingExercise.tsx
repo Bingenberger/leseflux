@@ -109,7 +109,7 @@ export function RepeatedReadingExercise({ exercise, isPaused, onComplete }: Prop
   }
 
   if (step.kind === 'quiz') {
-    return <QuizView questions={exercise.questions} onComplete={handleQuizDone} />
+    return <QuizView questions={exercise.questions} text={exercise.text.content} onComplete={handleQuizDone} />
   }
 
   if (step.kind === 'pass-intro') {

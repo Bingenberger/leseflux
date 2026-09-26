@@ -62,7 +62,7 @@ docker-compose build            # Rebuild images
 ## Key Algorithms
 
 ### Fading Timing (`packages/shared/src/fading.ts`)
-`calculateFadingTiming(targetWpm, word)` — word-length-corrected display/fade durations. 70% of time-per-word is display, 30% is fade-out. Length factor uses `0.6 + 0.4 * Math.sqrt(word.length / 5.5)` to avoid over-penalising long words. `buildFadingSchedule(targetWpm, words)` turns these into a schedule for the fully visible text: each word's slot is display + fade, the word is gone at the end of its slot, and slots are scaled so the whole text runs at exactly `targetWpm`.
+`calculateFadingTiming(targetWpm, word)` — syllable-corrected display/fade durations. 70% of time-per-word is display, 30% is fade-out. Length factor uses `0.6 + 0.4 * Math.sqrt(countSyllables(word) / 1.8)` to avoid over-penalising long words. After sentence ends / clause punctuation a pause (`FADING_PAUSES`, 0.6 / 0.3 of an average word) is inserted. `buildFadingSchedule(targetWpm, words)` turns these into a schedule for the fully visible text: each word's slot is display + fade, the word is gone at the end of its slot, and slots are scaled so the whole text (pauses included) runs at exactly `targetWpm`.
 
 ### Adaptive Engine (`apps/api/src/modules/training/adaptive.ts`)
 Runs server-side after every `POST /api/training/finish`. Adjusts `UserProgress.fadingTargetWpm` based on `averageQuizAccuracy` (comprehension questions of FADING runs only) over the last 10 sessions. On measurement days (SELF_PACED) the target is calibrated towards the measured WPM (`measurementCalibration` in config). Quiz options are shuffled per run (`services/quizOptions.ts`) and mapped back server-side for grading. All thresholds are **in `apps/api/src/config.ts`** (not hardcoded) so they can be tuned during pilots:
@@ -85,6 +85,9 @@ Text level = class grade (`Class.gradeLevel`, else parsed from class name), −1
 ### Cloze (Maze, `apps/api/src/services/cloze.ts`)
 Uses a different text than the reading text. Gaps ≈ every 7th content word after the first sentence (no function words, no sentence starts, no attributive adjectives); distractors match capitalisation/ending and come from other texts of the same level.
 
+### Teacher Insights (`apps/api/src/modules/teacher/insights.ts`)
+`GET /api/teacher/students/:id/insights`: accuracy per area (comprehension / Wortblitz / cloze), per question kind (`classifyQuestion()`: WOERTLICH / SCHLUSSFOLGERND / BEWERTEND), and flags (GUESSING, LOW_COMPREHENSION, IMPLAUSIBLE_PACE; thresholds in `adaptiveConfig.teacherInsights`).
+
 ### Intermediate Diagnostic
 Blends with the trained target (`blendDiagnosticTarget`, weight 0.5, max ±15 WPM); item selection prefers sentences the child has not seen (`diagnostic/itemSelection.ts`).
 
@@ -106,7 +109,9 @@ Blends with the trained target (`blendDiagnosticTarget`, weight 0.5, max ±15 WP
 - **Route trees**: `/child/*`, `/teacher/*`, `/admin/*` — each with its own layout and auth guard
 - **State**: TanStack Query for server state; Zustand for local UI state (active session, LRS settings, font size)
 - **Fading Reader**: core training component — renders words one at a time using CSS opacity transitions from `calculateFadingTiming()`; supports pause/resume; no other animations run during training
-- **LRS mode**: OpenDyslexic font toggle + optional syllable colouring using `hyphen` library with `hyphen-de` dictionary; odd syllables colour A, even syllables colour B
+- **LRS settings** (independent toggles in `settingsStore`): OpenDyslexic font (`lrsMode`), syllable colouring (`syllableColors`: off / blue-red / blue-green; speech syllables via `hypher` with leftmin 1 + `refineSyllables()` from shared; odd syllables colour A, even colour B), extra Wortblitz time (`flashExtraTime`, × 1.5)
+- **Wortblitz**: backward mask (`#####`, 100 ms) after each word; last 4 items come from the upcoming reading text with generated look-alike distractors (`services/flashWords.ts`)
+- **Quiz feedback**: wrong answer → answer passage from `findAnswerSentence()` + manual „Weiter“; stars via `starsForRound()` (completed = 2, good comprehension = 3)
 - **QR scanning**: `html5-qrcode` library on the child login screen
 
 ## UI Conventions

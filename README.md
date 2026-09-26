@@ -24,13 +24,23 @@ Das Zieltempo (WPM – Wörter pro Minute) wird **automatisch angepasst**:
 - Alle 10 Sitzungen wird ein **Zwischentest** angeboten. Sein Ergebnis wird mit dem trainierten Tempo verrechnet (je 50 %, max. ±15 WPM), statt den Trainingsfortschritt zu überschreiben. Sätze, die das Kind schon beurteilt hat, werden nur verwendet, wenn keine neuen mehr übrig sind (Parallelformen).
 - Die **Textstufe** richtet sich nach der Klassenstufe (an der Klasse einstellbar, sonst aus dem Klassennamen wie „3a“ abgeleitet). Bei schwachem Textverständnis (< 50 %) gibt es eine Stufe leichter, bei sehr gutem (≥ 90 %) eine schwerer. Das Lesetempo regelt allein das Fading.
 
+### Lesen mit Fading
+
+Die Anzeigedauer eines Wortes richtet sich nach seiner **Silbenzahl** (nicht nach der Buchstabenzahl). Nach einem Satzende gibt es eine kurze Pause (60 % einer Wortzeit), nach Komma, Semikolon oder Doppelpunkt eine kürzere (30 %). Pausen und Längenkorrektur verteilen die Zeit nur um, das Gesamttempo bleibt das Zieltempo.
+
+### Rückmeldung und LRS-Unterstützung
+
+- Nach einer falschen Antwort bleibt die Frage stehen, die passende **Textstelle** wird eingeblendet („Im Text steht: …“) und das Kind tippt selbst auf „Weiter“.
+- **Sterne**: Wer einen Abschnitt schafft, bekommt 2 Sterne, der dritte gibt es für gutes Verstehen (≥ 70 %).
+- In den Einstellungen sind **LRS-Schrift**, **Silbenfärbung** (Blau/Rot oder Blau/Grün, nach Sprechsilben: „I-gel“, „O-ma“) und **mehr Zeit beim Wortblitz** getrennt schaltbar.
+
 ### Übungsformen
 
 | Übung | Beschreibung |
 |---|---|
 | **Dreimal lesen** (Standard) | Wiederholtes Lesen desselben Textes: 1. im eigenen Tempo (liefert Messwert), dann Verständnisfragen, dann zwei Fading-Durchgänge mit +10 % und +20 % Tempo |
 | **Fading-Lesen** | Text einmal mit ausblendendem Fading lesen, anschließend Verständnisfragen (Vorlage „Fading klassisch“) |
-| **Wortblitz** | Wörter werden kurz aufgeblitzt; Kind wählt das richtige Wort aus Ablenkern |
+| **Wortblitz** | Wörter werden kurz aufgeblitzt, danach überdeckt eine kurze Maske (`#####`) das Nachbild; Kind wählt das richtige Wort aus ähnlich aussehenden Ablenkern. Die letzten 4 Wörter stammen aus dem folgenden Lesetext (Vorentlastung) |
 | **Lückentext (Maze)** | An einem *anderen* Text als dem Lesetext fehlt etwa jedes 7. Inhaltswort; Ablenker haben dieselbe Form (Groß-/Kleinschreibung, Endung) und stammen aus anderen Texten |
 | **Freies Lesen** | Text ohne Fading-Zwang; Lesetempo wird gemessen und für Statistiken genutzt |
 
@@ -137,7 +147,8 @@ Im Ordner `packages/text/` liegen fertige Importdateien:
 npm run seed:texts -- ./packages/text/texte.json
 
 # Wortblitz-Wörter importieren (über das Admin-Dashboard oder direkt)
-npx tsx apps/api/scripts/seedFlashWords.ts
+npx tsx apps/api/scripts/seedFlashWords.ts packages/text/wortblitz1.json
+npx tsx apps/api/scripts/seedFlashWords.ts packages/text/wortblitz2.json  # Sichtwortschatz, Silben, Wortbausteine
 ```
 
 Alternativ können Texte und Wörter im Lehrer- bzw. Admin-Dashboard über den Menüpunkt **Texte** bzw. **Wortblitz** als JSON-Datei hochgeladen werden. Das Format:

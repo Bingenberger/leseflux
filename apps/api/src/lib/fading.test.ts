@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildFadingSchedule,
+  pauseAfter,
   calculateFadingTiming,
   repeatedReadingPassWpm,
   splitIntoWords,
@@ -57,6 +58,23 @@ describe('buildFadingSchedule', () => {
     expect(longReadMs).toBeGreaterThan(shortReadMs)
   })
 
+  it('misst die Wortlänge in Silben, nicht in Buchstaben', () => {
+    // „Schrank“ (7 Buchstaben, 1 Silbe) bekommt nicht mehr Zeit als „Oma“ (3 Buchstaben, 2 Silben)
+    const oneSyllable = calculateFadingTiming(100, 'Schrank')
+    const twoSyllables = calculateFadingTiming(100, 'Oma')
+    expect(twoSyllables.displayMs).toBeGreaterThan(oneSyllable.displayMs)
+  })
+
+  it('macht nach Satzende und Komma eine Pause, ohne das Gesamttempo zu ändern', () => {
+    const plain = buildFadingSchedule(90, ['Mia', 'lief', 'los', 'und', 'Tim', 'rief'])
+    const punctuated = buildFadingSchedule(90, ['Mia', 'lief', 'los.', 'Und', 'Tim', 'rief'])
+    expect(punctuated.totalMs).toBeCloseTo(plain.totalMs, -1)
+    // Abstand zwischen „los.“ und „Und“ größer als zwischen „lief“ und „los.“
+    const beforeStop = punctuated.fadeStartMs[2]! - punctuated.fadeStartMs[1]!
+    const afterStop = punctuated.fadeStartMs[3]! - punctuated.fadeStartMs[2]!
+    expect(afterStop).toBeGreaterThan(beforeStop * 1.4)
+  })
+
   it('liefert für leere Texte einen leeren Plan', () => {
     expect(buildFadingSchedule(90, [])).toEqual({ fadeStartMs: [], fadeMs: [], totalMs: 0 })
   })
@@ -73,6 +91,14 @@ describe('splitIntoWords', () => {
 
   it('trims empty strings', () => {
     expect(splitIntoWords('  ')).toHaveLength(0)
+  })
+})
+
+describe('pauseAfter', () => {
+  it.each([
+    ['Haus', 0], ['Haus.', 0.6], ['Hilfe!', 0.6], ['sagte:', 0.3], ['Garten,', 0.3], ['Mia.“', 0.6], ['„Hallo', 0],
+  ])('%s → %s', (word, pause) => {
+    expect(pauseAfter(word)).toBe(pause)
   })
 })
 

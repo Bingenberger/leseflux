@@ -1,16 +1,19 @@
 import { randomUUID } from 'crypto'
-import type { ExerciseType, FlashWord, PrismaClient } from '@prisma/client'
+import type { ExerciseType, PrismaClient } from '@prisma/client'
 import { calculateFadingTiming } from '@leseflux/shared'
 import { adaptiveConfig } from '../config.js'
 import { selectNextText } from '../modules/training/textSelector.js'
 import { chooseTextLevel } from '../modules/training/textLevel.js'
 import { formatManualCloze, generateAutoCloze, mazePoolFromTexts } from './cloze.js'
 import { shuffleQuestionOptions } from './quizOptions.js'
+import { flashWordsFromText } from './flashWords.js'
 
 const DEFAULT_TEMPLATE_ID = 'standard-12-min'
 const CLASSIC_FADING_TEMPLATE_ID = 'fading-classic'
 const MEASUREMENT_TEMPLATE_ID = 'measurement-day'
 const FLASH_WORD_COUNT = 12
+/** Davon Wörter aus dem folgenden Lesetext (Vorentlastung) */
+const FLASH_TEXT_WORD_COUNT = 4
 /** Anzahl Texte derselben Stufe, aus denen Maze-Ablenker gezogen werden */
 const MAZE_POOL_TEXTS = 40
 
@@ -114,16 +117,32 @@ function shuffle<T>(items: T[]) {
   return copy
 }
 
-async function selectFlashWords(prisma: PrismaClient, level: number) {
+interface FlashItem {
+  id: string
+  word: string
+  syllables: number
+  difficultyLevel: number
+  distractors: unknown
+}
+
+/** Wortblitz-Wörter: aus dem Wortschatz der Stufe, am Ende einige Wörter aus dem folgenden
+ *  Lesetext, damit das Kind ihnen beim Lesen schon einmal begegnet ist. */
+async function selectFlashWords(prisma: PrismaClient, level: number, readingContent: string | null) {
+  const fromText = readingContent
+    ? flashWordsFromText(readingContent, FLASH_TEXT_WORD_COUNT, level)
+    : []
+  const textKeys = new Set(fromText.map((w) => w.word.toLowerCase()))
   const words = await prisma.flashWord.findMany({
     where: { difficultyLevel: { lte: level } },
     orderBy: { createdAt: 'desc' },
     take: 200,
   })
-  return shuffle(words).slice(0, FLASH_WORD_COUNT)
+  const fromPool = shuffle(words.filter((w) => !textKeys.has(w.word.toLowerCase())))
+    .slice(0, FLASH_WORD_COUNT - fromText.length)
+  return [...fromPool, ...fromText] as FlashItem[]
 }
 
-function formatFlashWord(word: FlashWord) {
+function formatFlashWord(word: FlashItem) {
   const distractors = (Array.isArray(word.distractors) ? word.distractors : []) as string[]
   const options = shuffle([word.word, ...distractors]).slice(0, 3)
   if (!options.includes(word.word)) options[0] = word.word
@@ -334,10 +353,10 @@ export async function buildTrainingSession(
   const templateBlocks = Array.isArray(template.blocks)
     ? (template.blocks as SessionBlock[])
     : []
-  const flashWords = await selectFlashWords(prisma, progress.flashWordLevel)
   const level = await resolveTextLevel(prisma, userId, progress)
   const text = await selectNextText(prisma, userId, level)
   if (!text) return null
+  const flashWords = await selectFlashWords(prisma, progress.flashWordLevel, text.content)
   const clozeExercise = templateBlocks.some((block) => block.type === 'CLOZE')
     ? await getClozeExercise(prisma, userId, level, text.id)
     : null

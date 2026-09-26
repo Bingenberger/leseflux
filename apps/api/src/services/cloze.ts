@@ -39,7 +39,7 @@ function shuffle<T>(items: T[], rng: Rng = Math.random) {
   return copy
 }
 
-function cleanWord(word: string) {
+export function cleanWord(word: string) {
   return word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 }
 
@@ -47,7 +47,7 @@ function isCapitalized(word: string) {
   return /^\p{Lu}/u.test(word)
 }
 
-function isContentWord(word: string) {
+export function isContentWord(word: string) {
   return word.length >= 3 && /^\p{L}+$/u.test(word) && !STOPWORDS.has(word.toLowerCase())
 }
 

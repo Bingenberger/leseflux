@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { RepeatedReadingConfig } from '@leseflux/shared'
+import type { RepeatedReadingConfig, StudentInsights } from '@leseflux/shared'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -116,6 +116,9 @@ export const getStudentSessions = (studentId: string, from?: string, to?: string
   api.get<SessionOverview[]>(`/teacher/students/${studentId}/sessions`, {
     params: { from, to },
   })
+
+export const getStudentInsights = (studentId: string) =>
+  api.get<StudentInsights>(`/teacher/students/${studentId}/insights`)
 
 export const getStudentExercises = (studentId: string, type: ExerciseTypeFilter = 'ALL', from?: string, to?: string) =>
   api.get<ExerciseRunOverview[]>(`/teacher/students/${studentId}/exercises/${type}`, {
