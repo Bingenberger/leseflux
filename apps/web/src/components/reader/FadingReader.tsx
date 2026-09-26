@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { calculateFadingTiming, splitIntoWords } from '@leseflux/shared'
+import { buildFadingSchedule, splitIntoWords } from '@leseflux/shared'
 import { useSettingsStore, fontSizeClass } from '../../store/settingsStore.ts'
 import { syllabify } from '../../lib/syllables.ts'
 
@@ -28,19 +28,10 @@ export function FadingReader({ text, targetWpm, isPaused, onComplete }: Props) {
   const words = useMemo(() => splitIntoWords(text), [text])
   const { fontSize, lrsMode } = useSettingsStore()
 
-  // Zeitpunkt (ms ab Start), ab dem jedes Wort zu verblassen beginnt
+  // Zeitpunkt (ms ab Start), ab dem jedes Wort zu verblassen beginnt – Gesamtdauer entspricht dem Zieltempo
   const schedule = useMemo(() => {
-    let t = 0
-    const startAt: number[] = []
-    const fadeMs: number[] = []
-    for (const word of words) {
-      startAt.push(t)
-      const { displayMs, fadeOutMs } = calculateFadingTiming(targetWpm, word)
-      fadeMs.push(fadeOutMs)
-      t += displayMs
-    }
-    const lastFadeMs = fadeMs[fadeMs.length - 1] ?? 300
-    return { startAt, fadeMs, totalMs: t + lastFadeMs + 200 }
+    const { fadeStartMs, fadeMs, totalMs } = buildFadingSchedule(targetWpm, words)
+    return { startAt: fadeStartMs, fadeMs, totalMs: totalMs + 200 }
   }, [words, targetWpm])
 
   // Wie viele Wörter haben bereits begonnen zu verblassen

@@ -78,6 +78,44 @@ export function runAdaptiveEngine(
   }
 }
 
+interface MeasurementRun {
+  measuredWpm: number | null
+  itemsTotal: number
+  itemsCorrect: number
+}
+
+/** Verständnisgenauigkeit über die Lese-Läufe einer Sitzung (nur Quizfragen, keine anderen Übungen).
+ *  Gibt null zurück, wenn keine Fragen beantwortet wurden. */
+export function readingQuizAccuracy(runs: { itemsTotal: number; itemsCorrect: number }[]): number | null {
+  const total = runs.reduce((sum, r) => sum + r.itemsTotal, 0)
+  if (total === 0) return null
+  return runs.reduce((sum, r) => sum + r.itemsCorrect, 0) / total
+}
+
+/** Kalibriert das Fading-Ziel am Messtag am tatsächlich gemessenen Lesetempo.
+ *  Nur Läufe mit plausiblem Tempo und ausreichendem Verständnis zählen.
+ *  Gibt das unveränderte Ziel zurück, wenn keine gültige Messung vorliegt. */
+export function calibrateFromMeasurement(
+  currentTargetWpm: number,
+  runs: MeasurementRun[],
+  minWpm: number,
+): number {
+  const cfg = adaptiveConfig.measurementCalibration
+  const valid = runs.filter((r) =>
+    r.measuredWpm !== null
+    && r.measuredWpm >= cfg.minPlausibleWpm
+    && r.measuredWpm <= cfg.maxPlausibleWpm
+    && r.itemsTotal > 0
+    && r.itemsCorrect / r.itemsTotal >= cfg.minQuizAccuracy,
+  )
+  if (valid.length === 0) return currentTargetWpm
+
+  const measured = valid.reduce((sum, r) => sum + r.measuredWpm!, 0) / valid.length
+  const proposed = (1 - cfg.weight) * currentTargetWpm + cfg.weight * measured * cfg.targetFactor
+  const change = Math.max(-cfg.maxChangeWpm, Math.min(cfg.maxChangeWpm, proposed - currentTargetWpm))
+  return Math.max(Math.round(currentTargetWpm + change), minWpm)
+}
+
 export function runFlashAdaptiveEngine(
   progress: FlashProgressSnapshot,
   accuracy: number,

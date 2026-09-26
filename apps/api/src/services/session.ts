@@ -3,6 +3,7 @@ import type { ExerciseType, FlashWord, PrismaClient } from '@prisma/client'
 import { calculateFadingTiming } from '@leseflux/shared'
 import { selectNextText } from '../modules/training/textSelector.js'
 import { formatManualCloze, generateAutoCloze } from './cloze.js'
+import { shuffleQuestionOptions } from './quizOptions.js'
 
 const DEFAULT_TEMPLATE_ID = 'standard-12-min'
 const MEASUREMENT_TEMPLATE_ID = 'measurement-day'
@@ -162,13 +163,15 @@ function formatText(text: TextWithQuestions) {
   }
 }
 
-function formatQuestions(text: TextWithQuestions) {
-  return text.questions.map((q) => ({
-    id: q.id,
-    question: q.question,
-    options: (typeof q.options === 'string' ? JSON.parse(q.options) : q.options) as string[],
-    correctIndex: q.correctIndex,
-  }))
+function formatQuestions(text: TextWithQuestions, runId: string) {
+  return text.questions.map((q) => {
+    const options = (typeof q.options === 'string' ? JSON.parse(q.options) : q.options) as string[]
+    return {
+      id: q.id,
+      question: q.question,
+      ...shuffleQuestionOptions(runId, q.id, options, q.correctIndex),
+    }
+  })
 }
 
 function getBlockDuration(blocks: SessionBlock[], orderIndex: number, fallbackSec: number) {
@@ -229,7 +232,7 @@ export async function createNextReadingExercise(
       type: 'SELF_PACED' as const,
       targetDurationSec,
       text: formatText(text),
-      questions: formatQuestions(text),
+      questions: formatQuestions(text, run.id),
     }
   }
 
@@ -245,7 +248,7 @@ export async function createNextReadingExercise(
     fadingMsBase,
     fadingMsPerChar,
     text: formatText(text),
-    questions: formatQuestions(text),
+    questions: formatQuestions(text, run.id),
   }
 }
 
@@ -349,7 +352,7 @@ export async function buildTrainingSession(
             type: 'SELF_PACED' as const,
             targetDurationSec: block.targetDurationSec,
             text: formatText(text),
-            questions: formatQuestions(text),
+            questions: formatQuestions(text, run.id),
           }
         }
         return {
@@ -360,7 +363,7 @@ export async function buildTrainingSession(
           fadingMsBase,
           fadingMsPerChar,
           text: formatText(text),
-          questions: formatQuestions(text),
+          questions: formatQuestions(text, run.id),
         }
       }),
   }

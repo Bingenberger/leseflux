@@ -5,8 +5,14 @@ import {
   FinishExerciseSchema,
   levelFromWpm,
 } from '@leseflux/shared'
-import { runAdaptiveEngine, runFlashAdaptiveEngine } from './adaptive.js'
+import {
+  calibrateFromMeasurement,
+  readingQuizAccuracy,
+  runAdaptiveEngine,
+  runFlashAdaptiveEngine,
+} from './adaptive.js'
 import { adaptiveConfig } from '../../config.js'
+import { toOriginalOptionIndex } from '../../services/quizOptions.js'
 import { buildTrainingSession, createNextReadingExercise, selectSessionTemplate } from '../../services/session.js'
 
 type SessionBlockPreview = {
@@ -241,10 +247,17 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     )
     const responseRecords = quizResponses.map((a) => {
       const question = questionMap.get(a.questionId)
+      // Optionen wurden pro Lauf gemischt ausgeliefert → auf gespeicherten Index zurückrechnen
+      const optionCount = question
+        ? ((typeof question.options === 'string' ? JSON.parse(question.options) : question.options) as string[]).length
+        : 0
+      const selectedIndex = question
+        ? toOriginalOptionIndex(run.id, question.id, optionCount, a.selectedIndex)
+        : a.selectedIndex
       return {
         questionId: a.questionId,
-        selectedIndex: a.selectedIndex,
-        isCorrect: question ? a.selectedIndex === question.correctIndex : false,
+        selectedIndex,
+        isCorrect: question ? selectedIndex === question.correctIndex : false,
         responseTimeMs: a.responseTimeMs,
       }
     })
@@ -331,15 +344,22 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     const progress = await fastify.prisma.userProgress.findUnique({ where: { userId } })
     if (progress) {
       const diagnosticInterval = await getIntermediateDiagnosticInterval()
-      const hasFading = fadingRuns.length > 0
       const level = levelFromWpm(progress.fadingTargetWpm)
-      const result = hasFading ? runAdaptiveEngine(progress, accuracy, level) : {
-        fadingTargetWpm: progress.fadingTargetWpm,
-        fadingSessionsSinceIncrease: progress.fadingSessionsSinceIncrease,
-        totalSessions: progress.totalSessions + 1,
-        averageQuizAccuracy: progress.averageQuizAccuracy ?? accuracy,
-        offerIntermediateDiagnostic: false,
-      }
+      const minWpm = adaptiveConfig.minWpmByLevel[level] ?? 30
+      // Das Fading-Tempo richtet sich nur nach dem Textverständnis beim Fading-Lesen –
+      // Wortblitz und Lückentext haben eigene Steuerungen und dürfen es nicht verzerren.
+      const fadingQuizAccuracy = readingQuizAccuracy(fadingRuns)
+      const measurementRuns = session.exerciseRuns.filter((r) => r.exerciseType === 'SELF_PACED')
+      const result = fadingQuizAccuracy !== null
+        ? runAdaptiveEngine(progress, fadingQuizAccuracy, level)
+        : {
+            // Messtag: Ziel am tatsächlich gemessenen Lesetempo kalibrieren
+            fadingTargetWpm: calibrateFromMeasurement(progress.fadingTargetWpm, measurementRuns, minWpm),
+            fadingSessionsSinceIncrease: progress.fadingSessionsSinceIncrease,
+            totalSessions: progress.totalSessions + 1,
+            averageQuizAccuracy: progress.averageQuizAccuracy,
+            offerIntermediateDiagnostic: false,
+          }
 
       // Zwischendiagnostik anbieten, solange sie für das aktuelle Intervall noch aussteht.
       // Damit bleibt das Angebot nach jedem Training bestehen, bis das Kind die Diagnostik

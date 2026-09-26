@@ -62,10 +62,10 @@ docker-compose build            # Rebuild images
 ## Key Algorithms
 
 ### Fading Timing (`packages/shared/src/fading.ts`)
-`calculateFadingTiming(targetWpm, word)` — word-length-corrected display/fade durations. 70% of time-per-word is display, 30% is fade-out. Length factor uses `0.6 + 0.4 * Math.sqrt(word.length / 5.5)` to avoid over-penalising long words. Overlapping fade: next word appears as previous fades (no gap).
+`calculateFadingTiming(targetWpm, word)` — word-length-corrected display/fade durations. 70% of time-per-word is display, 30% is fade-out. Length factor uses `0.6 + 0.4 * Math.sqrt(word.length / 5.5)` to avoid over-penalising long words. `buildFadingSchedule(targetWpm, words)` turns these into a schedule for the fully visible text: each word's slot is display + fade, the word is gone at the end of its slot, and slots are scaled so the whole text runs at exactly `targetWpm`.
 
 ### Adaptive Engine (`apps/api/src/modules/training/adaptive.ts`)
-Runs server-side after every `POST /api/training/finish`. Adjusts `UserProgress.currentTargetWpm` based on `averageQuizAccuracy` over the last 10 sessions. All thresholds are **in `apps/api/src/config.ts`** (not hardcoded) so they can be tuned during pilots:
+Runs server-side after every `POST /api/training/finish`. Adjusts `UserProgress.fadingTargetWpm` based on `averageQuizAccuracy` (comprehension questions of FADING runs only) over the last 10 sessions. On measurement days (SELF_PACED) the target is calibrated towards the measured WPM (`measurementCalibration` in config). Quiz options are shuffled per run (`services/quizOptions.ts`) and mapped back server-side for grading. All thresholds are **in `apps/api/src/config.ts`** (not hardcoded) so they can be tuned during pilots:
 
 | Parameter | Default |
 |---|---|

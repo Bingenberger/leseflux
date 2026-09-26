@@ -19,7 +19,8 @@ Lesefluss setzt das Verfahren **Constant Fading** um. Der zu lesende Text ist vo
 Das Zieltempo (WPM – Wörter pro Minute) wird **automatisch angepasst**:
 
 - Nach dem ersten Login absolviert das Kind einen kurzen **Eingangstest** (Sätze auf Sinn/Unsinn beurteilen), aus dem das initiale Lesetempo abgeleitet wird.
-- Nach je 5 Trainingseinheiten prüft die adaptive Engine den gleitenden Genauigkeitsdurchschnitt der Quizfragen. Bei ≥ 70 % Genauigkeit steigt das Tempo um 5 WPM; bei < 40 % sinkt es.
+- Nach je 5 Trainingseinheiten prüft die adaptive Engine den gleitenden Genauigkeitsdurchschnitt der Verständnisfragen zum Fading-Lesen (Wortblitz und Lückentext fließen nicht ein). Bei ≥ 70 % Genauigkeit steigt das Tempo um 5 WPM; bei < 40 % sinkt es. Die Antwortoptionen werden pro Durchgang gemischt, damit die Position der richtigen Antwort nicht erraten werden kann.
+- Am **Messtag** wird das Fading-Ziel am tatsächlich gemessenen Eigentempo kalibriert (Richtung 105 % des Messwerts, max. ±10 WPM), sofern der Text verstanden wurde und der Messwert plausibel ist.
 - Alle 10 Sitzungen wird ein **Zwischentest** angeboten, der das Tempo direkt neu kalibriert.
 
 ### Übungsformen
