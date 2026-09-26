@@ -1,0 +1,785 @@
+[
+  {
+    "word": "nicht",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "nickt",
+      "Nacht"
+    ]
+  },
+  {
+    "word": "sind",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Rind",
+      "sing"
+    ]
+  },
+  {
+    "word": "wieder",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "weider",
+      "wider"
+    ]
+  },
+  {
+    "word": "immer",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Imker",
+      "Zimmer"
+    ]
+  },
+  {
+    "word": "schon",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "schön",
+      "schob"
+    ]
+  },
+  {
+    "word": "auch",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Bauch",
+      "auf"
+    ]
+  },
+  {
+    "word": "dann",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "denn",
+      "Damm"
+    ]
+  },
+  {
+    "word": "denn",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "dann",
+      "dünn"
+    ]
+  },
+  {
+    "word": "weil",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "weit",
+      "Beil"
+    ]
+  },
+  {
+    "word": "noch",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "nach",
+      "doch"
+    ]
+  },
+  {
+    "word": "nach",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "noch",
+      "Bach"
+    ]
+  },
+  {
+    "word": "sehr",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Seher",
+      "mehr"
+    ]
+  },
+  {
+    "word": "viel",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Ziel",
+      "vier"
+    ]
+  },
+  {
+    "word": "vier",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "viel",
+      "Tier"
+    ]
+  },
+  {
+    "word": "heute",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Häute",
+      "Leute"
+    ]
+  },
+  {
+    "word": "gestern",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Gesten",
+      "Sternen"
+    ]
+  },
+  {
+    "word": "etwas",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "etwa",
+      "erwas"
+    ]
+  },
+  {
+    "word": "alle",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Halle",
+      "alte"
+    ]
+  },
+  {
+    "word": "kommen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "können",
+      "kämmen"
+    ]
+  },
+  {
+    "word": "können",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "kennen",
+      "Könner"
+    ]
+  },
+  {
+    "word": "haben",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "heben",
+      "Raben"
+    ]
+  },
+  {
+    "word": "sagen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "sägen",
+      "tragen"
+    ]
+  },
+  {
+    "word": "gehen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "geben",
+      "sehen"
+    ]
+  },
+  {
+    "word": "sehen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "gehen",
+      "Seen"
+    ]
+  },
+  {
+    "word": "machen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "wachen",
+      "Masche"
+    ]
+  },
+  {
+    "word": "fragen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "tragen",
+      "fegen"
+    ]
+  },
+  {
+    "word": "finden",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "binden",
+      "fanden"
+    ]
+  },
+  {
+    "word": "laufen",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "kaufen",
+      "taufen"
+    ]
+  },
+  {
+    "word": "denken",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "danken",
+      "schenken"
+    ]
+  },
+  {
+    "word": "wissen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Kissen",
+      "missen"
+    ]
+  },
+  {
+    "word": "dort",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Dorf",
+      "Wort"
+    ]
+  },
+  {
+    "word": "hier",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "hin",
+      "Tier"
+    ]
+  },
+  {
+    "word": "unter",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "munter",
+      "unten"
+    ]
+  },
+  {
+    "word": "über",
+    "syllables": 2,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Ufer",
+      "aber"
+    ]
+  },
+  {
+    "word": "zwischen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "zwicken",
+      "wischen"
+    ]
+  },
+  {
+    "word": "plötzlich",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "pünktlich",
+      "Plätzchen"
+    ]
+  },
+  {
+    "word": "vielleicht",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "vielfach",
+      "leicht"
+    ]
+  },
+  {
+    "word": "zusammen",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "zusehen",
+      "summen"
+    ]
+  },
+  {
+    "word": "ver",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "vor",
+      "wer"
+    ]
+  },
+  {
+    "word": "ung",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "ang",
+      "und"
+    ]
+  },
+  {
+    "word": "schaft",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "schafft",
+      "Schaf"
+    ]
+  },
+  {
+    "word": "heit",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "Heft",
+      "keit"
+    ]
+  },
+  {
+    "word": "keit",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "heit",
+      "kein"
+    ]
+  },
+  {
+    "word": "lich",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "lieb",
+      "Licht"
+    ]
+  },
+  {
+    "word": "chen",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "cher",
+      "schen"
+    ]
+  },
+  {
+    "word": "lein",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "leim",
+      "Bein"
+    ]
+  },
+  {
+    "word": "zer",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "zur",
+      "der"
+    ]
+  },
+  {
+    "word": "ent",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "erst",
+      "end"
+    ]
+  },
+  {
+    "word": "schen",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "schon",
+      "chen"
+    ]
+  },
+  {
+    "word": "ter",
+    "syllables": 1,
+    "difficultyLevel": 1,
+    "distractors": [
+      "der",
+      "tor"
+    ]
+  },
+  {
+    "word": "Zeitung",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Zeichnung",
+      "Leitung"
+    ]
+  },
+  {
+    "word": "Freiheit",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Freizeit",
+      "Feinheit"
+    ]
+  },
+  {
+    "word": "Freundschaft",
+    "syllables": 2,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Freundlich",
+      "Feindschaft"
+    ]
+  },
+  {
+    "word": "verlieren",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "verlieben",
+      "vermieten"
+    ]
+  },
+  {
+    "word": "vergessen",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "gegessen",
+      "versessen"
+    ]
+  },
+  {
+    "word": "Wohnung",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Wohnort",
+      "Hoffnung"
+    ]
+  },
+  {
+    "word": "Richtung",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Rechnung",
+      "Dichtung"
+    ]
+  },
+  {
+    "word": "fröhlich",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "fraglich",
+      "höflich"
+    ]
+  },
+  {
+    "word": "gefährlich",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "gefällig",
+      "gefährdet"
+    ]
+  },
+  {
+    "word": "Märchen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Mädchen",
+      "Mächte"
+    ]
+  },
+  {
+    "word": "Häuschen",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Häuser",
+      "Hörnchen"
+    ]
+  },
+  {
+    "word": "entdecken",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "erdecken",
+      "entrecken"
+    ]
+  },
+  {
+    "word": "Geburtstag",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Geburtsort",
+      "Gebrauch"
+    ]
+  },
+  {
+    "word": "Überraschung",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Überredung",
+      "Überzeugung"
+    ]
+  },
+  {
+    "word": "Wissenschaft",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Wirtschaft",
+      "Wissensdurst"
+    ]
+  },
+  {
+    "word": "Erdbeere",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Erdbeben",
+      "Heidelbeere"
+    ]
+  },
+  {
+    "word": "Taschenlampe",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Taschentuch",
+      "Tischlampe"
+    ]
+  },
+  {
+    "word": "Gewitter",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Gewichte",
+      "Gitter"
+    ]
+  },
+  {
+    "word": "Schildkröte",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Schildkraut",
+      "Schildkrone"
+    ]
+  },
+  {
+    "word": "Eichhörnchen",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Eichkörnchen",
+      "Einhörnchen"
+    ]
+  },
+  {
+    "word": "Frühstück",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Frühling",
+      "Fundstück"
+    ]
+  },
+  {
+    "word": "Hausaufgaben",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Hausaufgang",
+      "Hauptaufgaben"
+    ]
+  },
+  {
+    "word": "Spielplatz",
+    "syllables": 2,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Spielplan",
+      "Sportplatz"
+    ]
+  },
+  {
+    "word": "Kindergarten",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Kinderkarten",
+      "Gemüsegarten"
+    ]
+  },
+  {
+    "word": "Weihnachten",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "Weinachten",
+      "Mitternacht"
+    ]
+  },
+  {
+    "word": "Straßenbahn",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Straßenrand",
+      "Eisenbahn"
+    ]
+  },
+  {
+    "word": "Bürgermeister",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Bürgersteig",
+      "Baumeister"
+    ]
+  },
+  {
+    "word": "Klassenzimmer",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Klassenfahrt",
+      "Kinderzimmer"
+    ]
+  },
+  {
+    "word": "Sonnenblume",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Sonnenbrille",
+      "Sonnenuhr"
+    ]
+  },
+  {
+    "word": "Regenbogen",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Regentropfen",
+      "Ellenbogen"
+    ]
+  },
+  {
+    "word": "Abendessen",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "Abenteuer",
+      "Mittagessen"
+    ]
+  },
+  {
+    "word": "aufräumen",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "aufwärmen",
+      "austräumen"
+    ]
+  },
+  {
+    "word": "verstecken",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "verstehen",
+      "erstecken"
+    ]
+  },
+  {
+    "word": "erklären",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "erkälten",
+      "erzählen"
+    ]
+  },
+  {
+    "word": "erzählen",
+    "syllables": 3,
+    "difficultyLevel": 2,
+    "distractors": [
+      "erklären",
+      "ezählen"
+    ]
+  },
+  {
+    "word": "beobachten",
+    "syllables": 4,
+    "difficultyLevel": 3,
+    "distractors": [
+      "beachten",
+      "bewachten"
+    ]
+  },
+  {
+    "word": "wunderschön",
+    "syllables": 3,
+    "difficultyLevel": 3,
+    "distractors": [
+      "wunderbar",
+      "unterschön"
+    ]
+  }
+]

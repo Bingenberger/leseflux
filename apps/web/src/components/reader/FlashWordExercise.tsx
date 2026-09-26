@@ -11,16 +11,22 @@ interface FlashResponse {
   responseTimeMs: number
 }
 
+/** Dauer der Rückwärtsmaske: überdeckt das Nachbild, damit die Anzeigedauer die tatsächliche
+ *  Sehzeit bestimmt (sonst „liest“ das Kind noch im Nachbild weiter). */
+const MASK_MS = 100
+
+type Stage = 'word' | 'mask' | 'choose'
+
 interface Props {
   exercise: FlashWordExerciseData
   onComplete: (responses: FlashResponse[], durationMs: number) => void
 }
 
 export function FlashWordExercise({ exercise, onComplete }: Props) {
-  const { lrsMode } = useSettingsStore()
-  const displayMs = Math.round(exercise.flashDurationMs * (lrsMode ? 1.5 : 1))
+  const flashExtraTime = useSettingsStore((s) => s.flashExtraTime)
+  const displayMs = Math.round(exercise.flashDurationMs * (flashExtraTime ? 1.5 : 1))
   const [index, setIndex] = useState(0)
-  const [showWord, setShowWord] = useState(true)
+  const [stage, setStage] = useState<Stage>('word')
   const [responses, setResponses] = useState<FlashResponse[]>([])
   const startMsRef = useRef(Date.now())
   const itemStartMsRef = useRef(Date.now())
@@ -28,10 +34,14 @@ export function FlashWordExercise({ exercise, onComplete }: Props) {
   const current = exercise.words[index]
 
   useEffect(() => {
-    setShowWord(true)
+    setStage('word')
     itemStartMsRef.current = Date.now()
-    const id = window.setTimeout(() => setShowWord(false), displayMs)
-    return () => window.clearTimeout(id)
+    const maskId = window.setTimeout(() => setStage('mask'), displayMs)
+    const chooseId = window.setTimeout(() => setStage('choose'), displayMs + MASK_MS)
+    return () => {
+      window.clearTimeout(maskId)
+      window.clearTimeout(chooseId)
+    }
   }, [index, displayMs])
 
   if (!current) {
@@ -72,14 +82,20 @@ export function FlashWordExercise({ exercise, onComplete }: Props) {
       </div>
 
       <div className="h-28 flex items-center justify-center">
-        {showWord ? (
+        {stage === 'word' && (
           <div className="text-5xl font-black tracking-wide text-gray-950">{current.word}</div>
-        ) : (
+        )}
+        {stage === 'mask' && (
+          <div className="text-5xl font-black tracking-wide text-gray-950" aria-hidden="true">
+            {'#'.repeat(Math.max(current.word.length, 4))}
+          </div>
+        )}
+        {stage === 'choose' && (
           <div className="text-2xl font-semibold text-gray-400">Welches Wort war es?</div>
         )}
       </div>
 
-      {!showWord && (
+      {stage === 'choose' && (
         <div className="grid gap-3 w-full max-w-sm">
           {current.options.map((option) => (
             <Button key={option} size="lg" onClick={() => choose(option)} className="w-full">

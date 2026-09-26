@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ChildLayout } from '../../components/shared/Layout.tsx'
 import { Button } from '../../components/shared/Button.tsx'
 import { useAuthStore } from '../../store/authStore.ts'
-import { useSettingsStore } from '../../store/settingsStore.ts'
+import { SYLLABLE_COLOR_VALUES, useSettingsStore } from '../../store/settingsStore.ts'
+import type { SyllableColors } from '../../store/settingsStore.ts'
 import { checkDiagnostic, getMyProgress, getTodayProgram } from '../../lib/api.ts'
 import type { ExerciseType } from '../../lib/api.ts'
 
@@ -18,6 +19,7 @@ const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FADING: 'Lesen mit Fading',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Lesen im eigenen Tempo',
+  REPEATED_READING: 'Dreimal lesen',
 }
 
 const EXERCISE_ICON: Record<ExerciseType, string> = {
@@ -25,7 +27,14 @@ const EXERCISE_ICON: Record<ExerciseType, string> = {
   FADING: '📖',
   CLOZE: '🧩',
   SELF_PACED: '⏱',
+  REPEATED_READING: '🔁',
 }
+
+const SYLLABLE_OPTIONS: { value: SyllableColors; label: string }[] = [
+  { value: 'off', label: 'Aus' },
+  { value: 'blue-red', label: 'Blau/Rot' },
+  { value: 'blue-green', label: 'Blau/Grün' },
+]
 
 function minutesLabel(seconds: number) {
   const minutes = Math.round(seconds / 60)
@@ -35,8 +44,10 @@ function minutesLabel(seconds: number) {
 export default function ChildHomePage() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const { lrsMode, toggleLrsMode, fontSize, setFontSize, highContrast, toggleHighContrast } =
-    useSettingsStore()
+  const {
+    lrsMode, toggleLrsMode, fontSize, setFontSize, highContrast, toggleHighContrast,
+    syllableColors, setSyllableColors, flashExtraTime, toggleFlashExtraTime,
+  } = useSettingsStore()
 
   const { data: diagCheck } = useQuery({
     queryKey: ['diagnostic-check'],
@@ -196,6 +207,48 @@ export default function ChildHomePage() {
               ].join(' ')}
             >
               {lrsMode ? 'OpenDyslexic ✓' : 'Normal'}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Silben färben</span>
+            <div className="flex gap-1">
+              {SYLLABLE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setSyllableColors(option.value)}
+                  aria-label={`Silben färben: ${option.label}`}
+                  aria-pressed={syllableColors === option.value}
+                  className={[
+                    'px-3 py-1.5 rounded-full border text-sm font-medium transition-colors',
+                    syllableColors === option.value
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-white text-gray-600 border-gray-300',
+                  ].join(' ')}
+                >
+                  {option.value === 'off' ? option.label : (
+                    <>
+                      <span style={{ color: syllableColors === option.value ? undefined : SYLLABLE_COLOR_VALUES[option.value][0] }}>Sil</span>
+                      <span style={{ color: syllableColors === option.value ? undefined : SYLLABLE_COLOR_VALUES[option.value][1] }}>be</span>
+                    </>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-600">Mehr Zeit beim Wortblitz</span>
+            <button
+              onClick={toggleFlashExtraTime}
+              className={[
+                'px-4 py-1.5 rounded-full border text-sm font-medium transition-colors',
+                flashExtraTime
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white text-gray-600 border-gray-300',
+              ].join(' ')}
+            >
+              {flashExtraTime ? 'An ✓' : 'Aus'}
             </button>
           </div>
 

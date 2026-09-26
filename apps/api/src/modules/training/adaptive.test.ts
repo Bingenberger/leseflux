@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { runAdaptiveEngine, runFlashAdaptiveEngine, updateRollingAccuracy } from './adaptive.js'
+import {
+  blendDiagnosticTarget,
+  calibrateFromMeasurement,
+  readingQuizAccuracy,
+  runAdaptiveEngine,
+  runFlashAdaptiveEngine,
+  updateRollingAccuracy,
+} from './adaptive.js'
 
 describe('updateRollingAccuracy', () => {
   it('returns the new value when no previous value', () => {
@@ -91,5 +98,61 @@ describe('runAdaptiveEngine', () => {
     )
     expect(result.offerIntermediateDiagnostic).toBe(true)
     expect(result.totalSessions).toBe(10)
+  })
+})
+
+describe('readingQuizAccuracy', () => {
+  it('berechnet die Genauigkeit über alle Lese-Läufe', () => {
+    expect(readingQuizAccuracy([
+      { itemsTotal: 3, itemsCorrect: 3 },
+      { itemsTotal: 3, itemsCorrect: 0 },
+    ])).toBe(0.5)
+  })
+
+  it('gibt null zurück, wenn keine Fragen beantwortet wurden', () => {
+    expect(readingQuizAccuracy([])).toBeNull()
+    expect(readingQuizAccuracy([{ itemsTotal: 0, itemsCorrect: 0 }])).toBeNull()
+  })
+})
+
+describe('calibrateFromMeasurement', () => {
+  const understood = { itemsTotal: 3, itemsCorrect: 3 }
+
+  it('zieht das Ziel Richtung gemessenes Tempo (leicht darüber)', () => {
+    // 0,5 × 80 + 0,5 × 90 × 1,05 = 87,25 → +7
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: 90, ...understood }], 30)).toBe(87)
+  })
+
+  it('begrenzt die Änderung pro Messtag', () => {
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: 200, ...understood }], 30)).toBe(90)
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: 30, ...understood }], 30)).toBe(70)
+  })
+
+  it('ignoriert Messungen ohne ausreichendes Verständnis', () => {
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: 120, itemsTotal: 3, itemsCorrect: 1 }], 30)).toBe(80)
+  })
+
+  it('ignoriert unplausible Messwerte (z. B. sofort „Fertig“ getippt)', () => {
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: 900, ...understood }], 30)).toBe(80)
+    expect(calibrateFromMeasurement(80, [{ measuredWpm: null, ...understood }], 30)).toBe(80)
+  })
+
+  it('unterschreitet das Mindesttempo nicht', () => {
+    expect(calibrateFromMeasurement(35, [{ measuredWpm: 20, ...understood }], 30)).toBe(30)
+  })
+})
+
+describe('blendDiagnosticTarget', () => {
+  it('verrechnet Diagnose und Trainingsziel je zur Hälfte', () => {
+    expect(blendDiagnosticTarget(80, 90)).toBe(85)
+  })
+
+  it('verwirft den Trainingsfortschritt nicht bei einem schwachen Diagnosetag', () => {
+    // Diagnose 40 WPM → höchstens −15
+    expect(blendDiagnosticTarget(100, 40)).toBe(85)
+  })
+
+  it('begrenzt auch Sprünge nach oben', () => {
+    expect(blendDiagnosticTarget(60, 150)).toBe(75)
   })
 })

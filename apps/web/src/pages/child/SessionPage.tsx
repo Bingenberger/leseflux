@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { starsForRound } from '@leseflux/shared'
 import { ChildLayout } from '../../components/shared/Layout.tsx'
 import { FadingReader } from '../../components/reader/FadingReader.tsx'
 import { QuizView } from '../../components/reader/QuizView.tsx'
 import { FlashWordExercise } from '../../components/reader/FlashWordExercise.tsx'
 import { ClozeExercise } from '../../components/reader/ClozeExercise.tsx'
 import { SelfPacedReader } from '../../components/reader/SelfPacedReader.tsx'
+import { RepeatedReadingExercise } from '../../components/reader/RepeatedReadingExercise.tsx'
 import { Button } from '../../components/shared/Button.tsx'
 import { startSession, finishExercise, finishSession, startNextReadingExercise } from '../../lib/api.ts'
 import type { ExerciseResponse, StartSessionResponse, TrainingExercise } from '../../lib/api.ts'
@@ -21,6 +23,7 @@ const EXERCISE_LABEL: Record<TrainingExercise['type'], string> = {
   FADING: 'Lesen mit Fading',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Lesen im eigenen Tempo',
+  REPEATED_READING: 'Dreimal lesen',
 }
 
 const EXERCISE_ICON: Record<TrainingExercise['type'], string> = {
@@ -28,6 +31,7 @@ const EXERCISE_ICON: Record<TrainingExercise['type'], string> = {
   FADING: '📖',
   CLOZE: '🧩',
   SELF_PACED: '⏱',
+  REPEATED_READING: '🔁',
 }
 
 const EXERCISE_DESCRIPTION: Record<TrainingExercise['type'], string> = {
@@ -35,6 +39,7 @@ const EXERCISE_DESCRIPTION: Record<TrainingExercise['type'], string> = {
   FADING: 'Gleich liest du einen Text, der nach und nach ausgeblendet wird. Bleib ruhig im Tempo.',
   CLOZE: 'Gleich ergänzt du fehlende Wörter im Text. Nutze den Zusammenhang im Satz.',
   SELF_PACED: 'Gleich liest du in deinem eigenen Tempo. Lies genau und drücke danach weiter.',
+  REPEATED_READING: 'Du liest einen Text dreimal: zuerst in deinem Tempo, dann zweimal mit Fading – jedes Mal ein bisschen flüssiger.',
 }
 
 function minutesLabel(seconds: number) {
@@ -151,29 +156,22 @@ export default function SessionPage() {
     setPhase('quiz')
   }, [])
 
-  const handleQuizComplete = useCallback(
-    async (answers: QuizAnswer[]) => {
+  /** Abschluss einer Lese-Übung: Ergebnis senden, dann nächster Text im selben Block
+   *  (solange genug Zeit bleibt) oder nächster Block bzw. Sitzungsende. */
+  const completeReadingExercise = useCallback(
+    async (responses: ExerciseResponse[]) => {
       if (!sessionData) return
       const current = sessionData.exercises[currentIndex]
-      if (!current || (current.type !== 'FADING' && current.type !== 'SELF_PACED')) return
+      if (!current || (current.type !== 'FADING' && current.type !== 'SELF_PACED' && current.type !== 'REPEATED_READING')) return
       let round: Round = {
         textTitle: current.text.title,
         accuracy: 0,
-        starsEarned: 1,
+        starsEarned: starsForRound(0),
       }
       try {
         const runDurationMs = Date.now() - runStartMsRef.current
         const { data: exerciseResult } = await finishExercise(current.runId, {
-          responses: current.type === 'SELF_PACED' && selfPacedDurationMs !== null
-            ? [
-                {
-                  event: 'READING_DONE',
-                  wordCount: current.text.wordCount,
-                  durationMs: selfPacedDurationMs,
-                },
-                ...answers,
-              ]
-            : answers,
+          responses,
           durationMs: runDurationMs,
         })
 
@@ -195,7 +193,7 @@ export default function SessionPage() {
             round = {
               textTitle: current.text.title,
               accuracy: exerciseResult.accuracy,
-              starsEarned: exerciseResult.accuracy >= 0.7 ? 3 : exerciseResult.accuracy >= 0.4 ? 2 : 1,
+              starsEarned: starsForRound(exerciseResult.accuracy),
             }
             setLastRound(round)
             setCompletedRounds((prev) => [...prev, round])
@@ -218,7 +216,7 @@ export default function SessionPage() {
         round = {
           textTitle: current.text.title,
           accuracy: data?.accuracy ?? exerciseResult.accuracy,
-          starsEarned: data?.starsEarned ?? 1,
+          starsEarned: data?.starsEarned ?? starsForRound(exerciseResult.accuracy),
           offerIntermediateDiagnostic: data?.offerIntermediateDiagnostic,
           newTargetWpm: data?.newTargetWpm,
           streakDays: data?.streakDays,
@@ -240,7 +238,29 @@ export default function SessionPage() {
         setPhase('result')
       }
     },
-    [sessionData, currentIndex, queryClient, selfPacedDurationMs],
+    [sessionData, currentIndex, queryClient],
+  )
+
+  const handleQuizComplete = useCallback(
+    (answers: QuizAnswer[]) => {
+      const current = sessionData?.exercises[currentIndex]
+      void completeReadingExercise(
+        current?.type === 'SELF_PACED' && selfPacedDurationMs !== null
+          ? [
+              { event: 'READING_DONE', wordCount: current.text.wordCount, durationMs: selfPacedDurationMs },
+              ...answers,
+            ]
+          : answers,
+      )
+    },
+    [completeReadingExercise, sessionData, currentIndex, selfPacedDurationMs],
+  )
+
+  const handleRepeatedReadingComplete = useCallback(
+    (responses: ExerciseResponse[]) => {
+      void completeReadingExercise(responses)
+    },
+    [completeReadingExercise],
   )
 
   const handleFlashComplete = useCallback(
@@ -249,13 +269,13 @@ export default function SessionPage() {
       const current = sessionData.exercises[currentIndex]
       if (!current || current.type !== 'FLASH_WORD') return
 
-      let round: Round = { textTitle: 'Wortblitz', accuracy: 0, starsEarned: 1 }
+      let round: Round = { textTitle: 'Wortblitz', accuracy: 0, starsEarned: starsForRound(0) }
       try {
         const { data } = await finishExercise(current.runId, { responses, durationMs })
         round = {
           textTitle: 'Wortblitz',
           accuracy: data.accuracy,
-          starsEarned: data.accuracy >= 0.85 ? 3 : data.accuracy >= 0.5 ? 2 : 1,
+          starsEarned: starsForRound(data.accuracy, true, 0.85),
         }
       } catch {
         // Ergebnis mit Defaults verwenden
@@ -287,13 +307,13 @@ export default function SessionPage() {
       const current = sessionData.exercises[currentIndex]
       if (!current || current.type !== 'CLOZE') return
 
-      let round: Round = { textTitle: 'Lückentext', accuracy: 0, starsEarned: 1 }
+      let round: Round = { textTitle: 'Lückentext', accuracy: 0, starsEarned: starsForRound(0) }
       try {
         const { data } = await finishExercise(current.runId, { responses, durationMs })
         round = {
           textTitle: 'Lückentext',
           accuracy: data.accuracy,
-          starsEarned: data.accuracy >= 0.7 ? 3 : data.accuracy >= 0.4 ? 2 : 1,
+          starsEarned: starsForRound(data.accuracy),
         }
       } catch {
         // Ergebnis mit Defaults verwenden
@@ -406,7 +426,7 @@ export default function SessionPage() {
           </div>
           <h2 className="text-2xl font-bold text-primary text-center">Toll gemacht!</h2>
           <p className="text-gray-600 text-center">
-            {pct} % richtig — noch ca. {remainingMin} {remainingMin === 1 ? 'Minute' : 'Minuten'} übrig
+            {pct >= 70 ? `${pct} % richtig` : 'Abschnitt geschafft'} — noch ca. {remainingMin} {remainingMin === 1 ? 'Minute' : 'Minuten'} übrig
           </p>
           <Button size="lg" onClick={handleContinue} className="w-full">
             Weiter zum nächsten Abschnitt →
@@ -451,7 +471,7 @@ export default function SessionPage() {
               <span className="text-gray-500 text-sm">Ø Genauigkeit</span>
               <span className={[
                 'font-bold',
-                avgAccuracy >= 70 ? 'text-success' : avgAccuracy < 40 ? 'text-warning' : 'text-gray-700',
+                avgAccuracy >= 70 ? 'text-success' : 'text-gray-700',
               ].join(' ')}>{avgAccuracy} %</span>
             </div>
           </div>
@@ -488,9 +508,9 @@ export default function SessionPage() {
 
   if (phase === 'intro') {
     const title = EXERCISE_LABEL[current.type]
-    const detail = current.type === 'FADING' || current.type === 'CLOZE' || current.type === 'SELF_PACED'
-      ? current.text.title
-      : `${current.words.length} Wörter`
+    const detail = current.type === 'FLASH_WORD'
+      ? `${current.words.length} Wörter`
+      : current.text.title
     return (
       <ChildLayout>
         <div className="flex-1 flex flex-col items-center justify-center gap-6 p-8 max-w-sm mx-auto w-full text-center">
@@ -541,9 +561,7 @@ export default function SessionPage() {
         <div className="flex-1 mr-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-400 truncate max-w-[60%]">
-              {current.type === 'FADING' || current.type === 'CLOZE' || current.type === 'SELF_PACED'
-                ? current.text.title
-                : 'Wortblitz'}
+              {current.type === 'FLASH_WORD' ? 'Wortblitz' : current.text.title}
             </p>
             <p className="text-xs font-semibold text-primary shrink-0 ml-2">
               {remainingMin <= 1 ? 'Fast fertig!' : `Noch ca. ${remainingMin} Min.`}
@@ -572,6 +590,13 @@ export default function SessionPage() {
             <ClozeExercise exercise={current} onComplete={handleClozeComplete} />
           ) : current.type === 'SELF_PACED' ? (
             <SelfPacedReader text={current.text.content} onComplete={handleSelfPacedComplete} />
+          ) : current.type === 'REPEATED_READING' ? (
+            <RepeatedReadingExercise
+              key={current.runId}
+              exercise={current}
+              isPaused={isPaused}
+              onComplete={handleRepeatedReadingComplete}
+            />
           ) : (
           <FadingReader
             text={current.text.content}
@@ -583,6 +608,7 @@ export default function SessionPage() {
         {phase === 'quiz' && (current.type === 'FADING' || current.type === 'SELF_PACED') && (
           <QuizView
             questions={current.questions}
+            text={current.text.content}
             onComplete={handleQuizComplete}
           />
         )}

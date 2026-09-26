@@ -22,6 +22,7 @@ const EXERCISE_LABEL: Record<ExerciseType, string> = {
   FLASH_WORD: 'Wortblitz',
   CLOZE: 'Lückentext',
   SELF_PACED: 'Eigentempo',
+  REPEATED_READING: 'Wiederholtes Lesen',
 }
 
 function formatDate(iso: string) {
@@ -56,13 +57,15 @@ export function ExerciseAccuracyChart({ runs, type }: { runs: ExerciseRunOvervie
 }
 
 export function WpmChart({ sessions }: Props) {
+  // Zwei getrennte Reihen: gemessenes Eigentempo (Hauptkurve, nur plausible Werte) und Fading-Ziel
   const data = sessions
     .filter((s) => s.completed)
     .slice()
     .reverse()
     .map((s) => ({
       date: formatDate(s.startedAt),
-      wpm: s.measuredWpm ?? s.targetWpm,
+      ownPace: s.measuredWpm !== null && s.wpmFlag === null ? Math.round(s.measuredWpm) : null,
+      target: s.targetWpm,
     }))
 
   if (data.length === 0) {
@@ -87,17 +90,26 @@ export function WpmChart({ sessions }: Props) {
           unit=" WPM"
         />
         <Tooltip
-          formatter={(v: number) => [`${v} WPM`, 'Tempo']}
+          formatter={(v: number, name: string) => [`${v} WPM`, name === 'ownPace' ? 'Eigentempo' : 'Fading-Ziel']}
           labelStyle={{ fontSize: 12 }}
           contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
         />
         <Line
           type="monotone"
-          dataKey="wpm"
+          dataKey="ownPace"
           stroke="#3674B5"
-          strokeWidth={2}
+          strokeWidth={2.5}
           dot={{ r: 3, fill: '#3674B5' }}
           activeDot={{ r: 5 }}
+          connectNulls
+        />
+        <Line
+          type="stepAfter"
+          dataKey="target"
+          stroke="#9ca3af"
+          strokeWidth={1.5}
+          strokeDasharray="5 4"
+          dot={false}
         />
       </LineChart>
     </ResponsiveContainer>

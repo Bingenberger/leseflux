@@ -1,28 +1,14 @@
 import { useRef, useState } from 'react'
 import { Button } from '../shared/Button.tsx'
 import type { ClozeExercise as ClozeExerciseData, ExerciseResponse } from '../../lib/api.ts'
-import { useSettingsStore } from '../../store/settingsStore.ts'
-import { syllabify } from '../../lib/syllables.ts'
+import { SyllableWord } from './SyllableWord.tsx'
 
 interface Props {
   exercise: ClozeExerciseData
   onComplete: (responses: ExerciseResponse[], durationMs: number) => void
 }
 
-function SyllableText({ word }: { word: string }) {
-  return (
-    <>
-      {syllabify(word).map((part, index) => (
-        <span key={index} className={index % 2 === 0 ? 'text-primary' : 'text-success'}>
-          {part}
-        </span>
-      ))}
-    </>
-  )
-}
-
 export function ClozeExercise({ exercise, onComplete }: Props) {
-  const { lrsMode } = useSettingsStore()
   const [index, setIndex] = useState(0)
   const [responses, setResponses] = useState<ExerciseResponse[]>([])
   const startMsRef = useRef(Date.now())
@@ -91,7 +77,7 @@ export function ClozeExercise({ exercise, onComplete }: Props) {
           }
           return (
             <span key={`${word}-${wordIndex}`} className="mr-[0.3em]">
-              {lrsMode ? <SyllableText word={word} /> : word}
+              <SyllableWord word={word} />
             </span>
           )
         })}

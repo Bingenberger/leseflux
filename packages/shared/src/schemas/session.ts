@@ -33,6 +33,13 @@ export const ExerciseResponseSchema = z.union([
     wordCount: z.number().int().min(1),
     durationMs: z.number().int().min(0),
   }),
+  /** Wiederholtes Lesen: ein Fading-Durchgang am selben Text */
+  z.object({
+    event: z.literal('READING_PASS'),
+    pass: z.number().int().min(1).max(10),
+    wpm: z.number().int().min(1),
+    durationMs: z.number().int().min(0),
+  }),
 ])
 
 export const FinishExerciseSchema = z.object({

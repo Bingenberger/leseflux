@@ -5,7 +5,7 @@ import { TeacherLayout } from '../../components/shared/Layout.tsx'
 import { StudentTable } from '../../components/teacher/StudentTable.tsx'
 import { Button } from '../../components/shared/Button.tsx'
 import { PhosphorIcon } from '../../components/shared/PhosphorIcons.tsx'
-import { getClassDetail, getSessionTemplates, getStudentsOverview, importAntonStudents, deleteStudent, updateClassTemplate } from '../../lib/api.ts'
+import { getClassDetail, getSessionTemplates, getStudentsOverview, importAntonStudents, deleteStudent, updateClassGrade, updateClassTemplate } from '../../lib/api.ts'
 import { parseCsv, normalizeAntonRow } from '../../lib/csvParser.ts'
 
 function AntonImportModal({
@@ -180,6 +180,11 @@ export default function ClassPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['students-overview', id] }),
   })
 
+  const gradeMut = useMutation({
+    mutationFn: (gradeLevel: number | null) => updateClassGrade(id!, gradeLevel),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['class-detail', id] }),
+  })
+
   const templateMut = useMutation({
     mutationFn: (sessionTemplateId: string | null) => updateClassTemplate(id!, sessionTemplateId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['class-detail', id] }),
@@ -215,6 +220,27 @@ export default function ClassPage() {
             Schüler hinzufügen
           </Button>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-gray-700">Klassenstufe</p>
+          <p className="text-xs text-gray-400">
+            Bestimmt die Textstufe. Bei schwachem Textverständnis wählt das System eine Stufe leichter,
+            bei sehr gutem eine schwerer. Das Lesetempo regelt das Fading unabhängig davon.
+          </p>
+        </div>
+        <select
+          value={classDetail?.gradeLevel ?? ''}
+          onChange={(e) => gradeMut.mutate(e.target.value ? Number(e.target.value) : null)}
+          disabled={!classDetail || gradeMut.isPending}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm min-w-56 focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">Aus Klassenbezeichnung ableiten</option>
+          {[1, 2, 3, 4, 5, 6].map((grade) => (
+            <option key={grade} value={grade}>Klasse {grade}</option>
+          ))}
+        </select>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-3">

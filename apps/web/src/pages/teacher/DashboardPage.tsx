@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
   const [newYear, setNewYear] = useState('2025/26')
+  const [newGrade, setNewGrade] = useState('')
   const [formError, setFormError] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
 
@@ -31,11 +32,12 @@ export default function DashboardPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: () => createClass(newName, newYear),
+    mutationFn: () => createClass(newName, newYear, newGrade ? Number(newGrade) : null),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['classes'] })
       setShowNew(false)
       setNewName('')
+      setNewGrade('')
     },
     onError: () => setFormError('Fehler beim Anlegen der Klasse.'),
   })
@@ -89,6 +91,20 @@ export default function DashboardPage() {
               className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="3a"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Klassenstufe</label>
+            <select
+              value={newGrade}
+              onChange={(e) => setNewGrade(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">Aus Klassenbezeichnung ableiten</option>
+              {[1, 2, 3, 4, 5, 6].map((grade) => (
+                <option key={grade} value={grade}>Klasse {grade}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Bestimmt die Schwierigkeit der Lesetexte.</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Schuljahr</label>

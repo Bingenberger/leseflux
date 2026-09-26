@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { RepeatedReadingConfig, StudentInsights } from '@leseflux/shared'
 
 export const api = axios.create({
   baseURL: '/api',
@@ -71,8 +72,11 @@ export const finishSession = (payload: FinishSessionPayload) =>
 
 export const getClasses = () => api.get<ClassSummary[]>('/teacher/classes')
 
-export const createClass = (name: string, schoolYear: string) =>
-  api.post<ClassDetail>('/teacher/classes', { name, schoolYear })
+export const createClass = (name: string, schoolYear: string, gradeLevel: number | null) =>
+  api.post<ClassDetail>('/teacher/classes', { name, schoolYear, gradeLevel })
+
+export const updateClassGrade = (id: string, gradeLevel: number | null) =>
+  api.patch<ClassDetail>(`/teacher/classes/${id}/grade`, { gradeLevel })
 
 export const getClassDetail = (id: string) =>
   api.get<ClassDetail>(`/teacher/classes/${id}`)
@@ -112,6 +116,9 @@ export const getStudentSessions = (studentId: string, from?: string, to?: string
   api.get<SessionOverview[]>(`/teacher/students/${studentId}/sessions`, {
     params: { from, to },
   })
+
+export const getStudentInsights = (studentId: string) =>
+  api.get<StudentInsights>(`/teacher/students/${studentId}/insights`)
 
 export const getStudentExercises = (studentId: string, type: ExerciseTypeFilter = 'ALL', from?: string, to?: string) =>
   api.get<ExerciseRunOverview[]>(`/teacher/students/${studentId}/exercises/${type}`, {
@@ -324,7 +331,7 @@ export interface StartSessionResponse {
   exercises: TrainingExercise[]
 }
 
-export type ReadingExercise = FadingExercise | SelfPacedExercise
+export type ReadingExercise = FadingExercise | SelfPacedExercise | RepeatedReadingExercise
 export type TrainingExercise = ReadingExercise | FlashWordExercise | ClozeExercise
 
 export interface FadingExercise {
@@ -348,6 +355,23 @@ export interface SelfPacedExercise {
   runId: string
   type: 'SELF_PACED'
   targetDurationSec: number
+  text: {
+    id: string
+    title: string
+    content: string
+    wordCount: number
+    estimatedSec: number
+  }
+  questions: SessionQuestion[]
+}
+
+/** Wiederholtes Lesen im Dreischritt: Eigentempo → Fragen → zwei Fading-Durchgänge am selben Text */
+export interface RepeatedReadingExercise {
+  runId: string
+  type: 'REPEATED_READING'
+  targetDurationSec: number
+  fadingTargetWpm: number
+  passConfig: RepeatedReadingConfig
   text: {
     id: string
     title: string
@@ -410,6 +434,7 @@ export type ExerciseResponse =
       responseTimeMs: number
     }
   | { event: 'READING_DONE'; wordCount: number; durationMs: number }
+  | { event: 'READING_PASS'; pass: number; wpm: number; durationMs: number }
 
 export interface FinishExercisePayload {
   responses: ExerciseResponse[]
@@ -441,6 +466,7 @@ export interface ClassSummary {
   id: string
   name: string
   schoolYear: string
+  gradeLevel: number | null
   _count: { students: number }
   teacher?: { id: string; displayName: string; email: string | null }
 }
@@ -449,6 +475,7 @@ export interface ClassDetail {
   id: string
   name: string
   schoolYear: string
+  gradeLevel: number | null
   sessionTemplateId?: string | null
   sessionTemplate?: SessionTemplateSummary | null
   students: StudentSummary[]
@@ -495,7 +522,7 @@ export interface SessionOverview {
   quizAccuracy: number | null
 }
 
-export type ExerciseType = 'FADING' | 'FLASH_WORD' | 'CLOZE' | 'SELF_PACED'
+export type ExerciseType = 'FADING' | 'FLASH_WORD' | 'CLOZE' | 'SELF_PACED' | 'REPEATED_READING'
 export type ExerciseTypeFilter = ExerciseType | 'ALL'
 
 export interface ExerciseRunOverview {

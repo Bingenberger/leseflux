@@ -223,6 +223,49 @@ async function main() {
     })
   }
 
+  // Zwischendiagnostik — zweite Satzform (Parallelform). Wird auch in bestehende Datenbanken
+  // eingespielt, damit wiederholte Zwischendiagnostiken nicht immer dieselben Sätze zeigen.
+  const intermediate = await prisma.diagnostic.findFirst({ where: { type: 'INTERMEDIATE' } })
+  if (intermediate) {
+    const PARALLEL_ITEMS = [
+      // Leicht (difficulty 1)
+      { sentence: 'Der Himmel ist oft blau.', isNonsense: false, difficulty: 1 },
+      { sentence: 'Kühe legen jeden Tag Eier.', isNonsense: true, difficulty: 1 },
+      { sentence: 'Im Winter ist es meist kalt.', isNonsense: false, difficulty: 1 },
+      { sentence: 'Brot kann man essen.', isNonsense: false, difficulty: 1 },
+      { sentence: 'Steine können schnell rennen.', isNonsense: true, difficulty: 1 },
+      { sentence: 'Ein Ball ist rund.', isNonsense: false, difficulty: 1 },
+      { sentence: 'Mit der Nase kann man hören.', isNonsense: true, difficulty: 1 },
+      { sentence: 'Hasen haben lange Ohren.', isNonsense: false, difficulty: 1 },
+      // Mittel (difficulty 2)
+      { sentence: 'Im Herbst fallen die Blätter von den Bäumen.', isNonsense: false, difficulty: 2 },
+      { sentence: 'Pinguine fliegen jeden Winter nach Afrika.', isNonsense: true, difficulty: 2 },
+      { sentence: 'Mit einer Schere kann man Papier schneiden.', isNonsense: false, difficulty: 2 },
+      { sentence: 'Bienen sammeln Nektar und machen daraus Honig.', isNonsense: false, difficulty: 2 },
+      { sentence: 'Schnee ist warm und schmilzt nie.', isNonsense: true, difficulty: 2 },
+      { sentence: 'Ein Jahr hat zwölf Monate.', isNonsense: false, difficulty: 2 },
+      { sentence: 'Frösche wohnen am liebsten in trockenen Wüsten.', isNonsense: true, difficulty: 2 },
+      { sentence: 'Bei Rot muss man an der Ampel stehen bleiben.', isNonsense: false, difficulty: 2 },
+      // Schwer (difficulty 3)
+      { sentence: 'Wenn Wasser gefriert, wird es zu festem Eis.', isNonsense: false, difficulty: 3 },
+      { sentence: 'Maulwürfe bauen ihre Nester hoch oben in den Baumkronen.', isNonsense: true, difficulty: 3 },
+      { sentence: 'Die Erde dreht sich einmal am Tag um sich selbst.', isNonsense: false, difficulty: 3 },
+      { sentence: 'Ameisen können ein Vielfaches ihres eigenen Gewichts tragen.', isNonsense: false, difficulty: 3 },
+      { sentence: 'Ärztinnen reparieren kranke Menschen mit Hammer und Nägeln.', isNonsense: true, difficulty: 3 },
+      { sentence: 'Laubbäume bekommen im Frühling neue grüne Blätter.', isNonsense: false, difficulty: 3 },
+      { sentence: 'Der Mond ist größer als die Sonne und leuchtet selbst.', isNonsense: true, difficulty: 3 },
+      { sentence: 'Kakteen kommen in der Wüste mit sehr wenig Wasser aus.', isNonsense: false, difficulty: 3 },
+    ]
+    const offset = await prisma.diagnosticItem.count({ where: { diagnosticId: intermediate.id } })
+    for (const [i, item] of PARALLEL_ITEMS.entries()) {
+      await prisma.diagnosticItem.upsert({
+        where: { diagnosticId_sentence: { diagnosticId: intermediate.id, sentence: item.sentence } },
+        update: {},
+        create: { ...item, diagnosticId: intermediate.id, orderIndex: offset + i },
+      })
+    }
+  }
+
   // Demo-Texte (je einer pro Niveau, damit der Selector immer etwas findet)
   const DEMO_TEXTS = [
     {

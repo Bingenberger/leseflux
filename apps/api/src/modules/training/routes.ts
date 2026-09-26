@@ -4,9 +4,17 @@ import {
   FinishSessionSchema,
   FinishExerciseSchema,
   levelFromWpm,
+  starsForRound,
 } from '@leseflux/shared'
-import { runAdaptiveEngine, runFlashAdaptiveEngine } from './adaptive.js'
+import {
+  calibrateFromMeasurement,
+  readingQuizAccuracy,
+  runAdaptiveEngine,
+  runFlashAdaptiveEngine,
+  updateRollingAccuracy,
+} from './adaptive.js'
 import { adaptiveConfig } from '../../config.js'
+import { toOriginalOptionIndex } from '../../services/quizOptions.js'
 import { buildTrainingSession, createNextReadingExercise, selectSessionTemplate } from '../../services/session.js'
 
 type SessionBlockPreview = {
@@ -241,19 +249,32 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     )
     const responseRecords = quizResponses.map((a) => {
       const question = questionMap.get(a.questionId)
+      // Optionen wurden pro Lauf gemischt ausgeliefert → auf gespeicherten Index zurückrechnen
+      const optionCount = question
+        ? ((typeof question.options === 'string' ? JSON.parse(question.options) : question.options) as string[]).length
+        : 0
+      const selectedIndex = question
+        ? toOriginalOptionIndex(run.id, question.id, optionCount, a.selectedIndex)
+        : a.selectedIndex
       return {
         questionId: a.questionId,
-        selectedIndex: a.selectedIndex,
-        isCorrect: question ? a.selectedIndex === question.correctIndex : false,
+        selectedIndex,
+        isCorrect: question ? selectedIndex === question.correctIndex : false,
         responseTimeMs: a.responseTimeMs,
       }
     })
 
     const correctCount = responseRecords.filter((a) => a.isCorrect).length
     const accuracy = responseRecords.length > 0 ? correctCount / responseRecords.length : 0
-    const measuredWpm = run.exerciseType === 'SELF_PACED' && readingDone && readingDone.durationMs > 0
+    // Eigentempo-Messung: Messtag bzw. erster (kalter) Durchgang beim wiederholten Lesen
+    const measuresOwnPace = run.exerciseType === 'SELF_PACED' || run.exerciseType === 'REPEATED_READING'
+    const measuredWpm = measuresOwnPace && readingDone && readingDone.durationMs > 0
       ? Math.round((readingDone.wordCount / (readingDone.durationMs / 60_000)) * 10) / 10
       : null
+    const passRecords = responses.filter(
+      (a): a is { event: 'READING_PASS'; pass: number; wpm: number; durationMs: number } =>
+        'event' in a && a.event === 'READING_PASS',
+    )
 
     await fastify.prisma.exerciseRun.update({
       where: { id: runId },
@@ -263,11 +284,14 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
         itemsTotal: responseRecords.length,
         itemsCorrect: correctCount,
         measuredWpm,
-        responses: responseRecords,
+        responses: [...responseRecords, ...passRecords],
       },
     })
 
-    if (run.exerciseType === 'SELF_PACED' && measuredWpm !== null) {
+    // Nur plausible Messungen in den Eigentempo-Durchschnitt (sofortiges „Fertig“ verfälscht sonst)
+    const { minPlausibleWpm, maxPlausibleWpm } = adaptiveConfig.measurementCalibration
+    if (measuresOwnPace && measuredWpm !== null
+      && measuredWpm >= minPlausibleWpm && measuredWpm <= maxPlausibleWpm) {
       const progress = await fastify.prisma.userProgress.findUnique({ where: { userId } })
       if (progress) {
         const alpha = 0.25
@@ -321,7 +345,8 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     const totalQuestions = scoredRuns.reduce((sum, r) => sum + r.itemsTotal, 0)
     const correctCount = scoredRuns.reduce((sum, r) => sum + r.itemsCorrect, 0)
     const accuracy = totalQuestions > 0 ? correctCount / totalQuestions : 0
-    const starsEarned = accuracy >= 0.7 ? 3 : accuracy >= 0.4 ? 2 : 1
+    // Wer die Sitzung schafft, bekommt mindestens 2 Sterne; der dritte für gutes Verstehen
+    const starsEarned = starsForRound(accuracy)
 
     await fastify.prisma.trainingSession.update({
       where: { id: sessionId },
@@ -331,15 +356,28 @@ const trainingRoutes: FastifyPluginAsync = async (fastify) => {
     const progress = await fastify.prisma.userProgress.findUnique({ where: { userId } })
     if (progress) {
       const diagnosticInterval = await getIntermediateDiagnosticInterval()
-      const hasFading = fadingRuns.length > 0
       const level = levelFromWpm(progress.fadingTargetWpm)
-      const result = hasFading ? runAdaptiveEngine(progress, accuracy, level) : {
-        fadingTargetWpm: progress.fadingTargetWpm,
-        fadingSessionsSinceIncrease: progress.fadingSessionsSinceIncrease,
-        totalSessions: progress.totalSessions + 1,
-        averageQuizAccuracy: progress.averageQuizAccuracy ?? accuracy,
-        offerIntermediateDiagnostic: false,
-      }
+      const minWpm = adaptiveConfig.minWpmByLevel[level] ?? 30
+      // Das Fading-Tempo richtet sich nur nach dem Textverständnis beim Fading-Lesen –
+      // Wortblitz und Lückentext haben eigene Steuerungen und dürfen es nicht verzerren.
+      const fadingQuizAccuracy = readingQuizAccuracy(fadingRuns)
+      // Eigentempo-Messungen: Messtag und kalter erster Durchgang beim wiederholten Lesen
+      const measurementRuns = session.exerciseRuns.filter(
+        (r) => r.exerciseType === 'SELF_PACED' || r.exerciseType === 'REPEATED_READING',
+      )
+      const measurementQuizAccuracy = readingQuizAccuracy(measurementRuns)
+      const result = fadingQuizAccuracy !== null
+        ? runAdaptiveEngine(progress, fadingQuizAccuracy, level)
+        : {
+            // Kein Fading-Quiz: Ziel am tatsächlich gemessenen Lesetempo kalibrieren
+            fadingTargetWpm: calibrateFromMeasurement(progress.fadingTargetWpm, measurementRuns, minWpm),
+            fadingSessionsSinceIncrease: progress.fadingSessionsSinceIncrease,
+            totalSessions: progress.totalSessions + 1,
+            averageQuizAccuracy: measurementQuizAccuracy !== null
+              ? updateRollingAccuracy(progress.averageQuizAccuracy, measurementQuizAccuracy)
+              : progress.averageQuizAccuracy,
+            offerIntermediateDiagnostic: false,
+          }
 
       // Zwischendiagnostik anbieten, solange sie für das aktuelle Intervall noch aussteht.
       // Damit bleibt das Angebot nach jedem Training bestehen, bis das Kind die Diagnostik

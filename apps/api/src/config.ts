@@ -16,6 +16,58 @@ export const adaptiveConfig = {
     durationMax: 800,
     durationOnLevelUp: 500,
   },
+  /** Messtag (Lesen im eigenen Tempo): kalibriert das Fading-Tempo am tatsächlich gemessenen Lesetempo */
+  measurementCalibration: {
+    /** Fading-Ziel = Faktor × gemessenes Tempo (leicht über dem Eigentempo) */
+    targetFactor: 1.05,
+    /** Gewicht des Messwerts gegenüber dem bisherigen Ziel (0–1) */
+    weight: 0.5,
+    /** Maximale Änderung des Ziels pro Messtag in WPM */
+    maxChangeWpm: 10,
+    /** Messung zählt nur, wenn der Text auch verstanden wurde */
+    minQuizAccuracy: 0.66,
+    /** Plausibilitätsgrenzen – schnelles „Fertig“-Tippen ohne Lesen wird ignoriert */
+    minPlausibleWpm: 20,
+    maxPlausibleWpm: 250,
+  },
+  /** Wiederholtes Lesen (Dreischritt): 1. Eigentempo → Fragen → 2./3. Fading-Durchgang am selben Text */
+  repeatedReading: {
+    /** Tempo der Fading-Durchgänge 2 und 3 relativ zur Basis (Kaltlesetempo bzw. Fading-Ziel) */
+    passFactors: [1.1, 1.2],
+    /** Das Kaltlesetempo zählt als Basis nur innerhalb dieses Bandes um das Fading-Ziel */
+    baseMinFactor: 0.8,
+    baseMaxFactor: 1.2,
+  },
+  /** Zwischendiagnostik verrechnet ihr Ergebnis mit dem bisherigen Ziel, statt es zu überschreiben */
+  intermediateDiagnostic: {
+    /** Gewicht des Diagnoseergebnisses (0–1) */
+    weight: 0.5,
+    /** Maximale Änderung des Fading-Ziels pro Zwischendiagnostik in WPM */
+    maxChangeWpm: 15,
+  },
+  /** Textstufe aus Klassenstufe und Verständnis (nicht aus dem Tempo) */
+  textLevel: {
+    /** Unter dieser Verständnisgenauigkeit eine Stufe leichter */
+    easierBelow: 0.5,
+    /** Ab dieser Verständnisgenauigkeit eine Stufe schwerer */
+    harderFrom: 0.9,
+    minLevel: 2,
+    maxLevel: 4,
+  },
+  /** Hinweise für Lehrkräfte (Reiter „Auffälligkeiten“) */
+  teacherInsights: {
+    /** Anzahl der jüngsten Läufe je Bereich für die Genauigkeitsübersicht */
+    recentRuns: 10,
+    /** Rate-Muster: Median der Antwortzeit darunter UND Verständnis darunter */
+    guessingMedianMs: 2500,
+    guessingMaxAccuracy: 0.5,
+    guessingMinAnswers: 6,
+    /** Dauerhaft schwaches Verständnis: Mittel der letzten Leseläufe darunter */
+    lowComprehensionBelow: 0.4,
+    lowComprehensionRuns: 5,
+    /** Unplausible Eigentempo-Messungen: so viele unter den letzten fünf */
+    implausiblePaceCount: 2,
+  },
   diagnostic: { intervalSessions: 10 },
   /** Initiales Fading-Tempo = Faktor × diagnostisch ermittelte WPM */
   initialWpmFactor: 0.9,

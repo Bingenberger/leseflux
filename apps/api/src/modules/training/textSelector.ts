@@ -1,17 +1,15 @@
 import type { PrismaClient } from '@prisma/client'
-import { levelFromWpm } from '@leseflux/shared'
 
-/** Wählt einen passenden Text basierend auf WPM-Niveau.
- *  Schließt die letzten `excludeCount` Sitzungen des Nutzers aus.
+/** Wählt einen Text der angegebenen Stufe (siehe `chooseTextLevel`).
+ *  Schließt Texte der letzten `excludeCount` Sitzungen des Nutzers sowie `extraExcludeIds` aus.
  *  Fallback: benachbarte Niveaus → beliebiger Text, falls Zielniveau leer ist. */
 export async function selectNextText(
   prisma: PrismaClient,
   userId: string,
-  currentTargetWpm: number,
+  level: number,
+  extraExcludeIds: string[] = [],
   excludeCount = 10,
 ) {
-  const level = levelFromWpm(currentTargetWpm)
-
   const recent = await prisma.trainingSession.findMany({
     where: { userId },
     orderBy: { startedAt: 'desc' },
@@ -23,9 +21,12 @@ export async function selectNextText(
       },
     },
   })
-  const excludeIds = recent.flatMap((s) =>
-    s.exerciseRuns.map((r) => r.textId).filter((id): id is string => id !== null),
-  )
+  const excludeIds = [
+    ...extraExcludeIds,
+    ...recent.flatMap((s) =>
+      s.exerciseRuns.map((r) => r.textId).filter((id): id is string => id !== null),
+    ),
+  ]
 
   const pickFrom = async (levels: number[]): Promise<{ id: string } | null> => {
     const candidates = await prisma.text.findMany({
@@ -34,15 +35,15 @@ export async function selectNextText(
     })
     if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)]!
 
-    // Alle Texte der Niveaus (ohne Ausschluss), falls alles schon gelesen
+    // Alle Texte der Niveaus (nur ohne Verlaufs-Ausschluss), falls alles schon gelesen
     const all = await prisma.text.findMany({
-      where: { targetLevel: { in: levels } },
+      where: { targetLevel: { in: levels }, id: { notIn: extraExcludeIds } },
       select: { id: true },
     })
     return all.length > 0 ? all[Math.floor(Math.random() * all.length)]! : null
   }
 
-  // 1. Zielnivaeu
+  // 1. Zielniveau
   let chosen = await pickFrom([level])
 
   // 2. Benachbartes Niveau
